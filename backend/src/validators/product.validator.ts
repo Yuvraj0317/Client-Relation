@@ -2,13 +2,19 @@ import { z } from 'zod';
 
 export const createProductSchema = z.object({
   body: z.object({
-    name: z.string().min(2, 'Product name must be at least 2 characters'),
-    sku: z.string().min(2, 'SKU code must be at least 2 characters'),
+    name: z.string().min(2, 'Product name is required'),
+    sku: z.string().min(2, 'SKU code is required'),
     category: z.string().min(2, 'Category is required'),
-    unitPrice: z.number().positive('Unit price must be a positive number'),
-    currentStock: z.number().int().nonnegative('Current stock cannot be negative').default(0),
-    minStock: z.number().int().nonnegative('Minimum stock threshold cannot be negative').default(5),
-    location: z.string().default('Main Warehouse'),
+    unitPrice: z.number({ invalid_type_error: 'Unit price must be a valid number' })
+      .min(0, 'Unit price cannot be negative'),
+    currentStock: z.number({ invalid_type_error: 'Current stock must be a valid number' })
+      .int('Current stock must be an integer')
+      .min(0, 'Current stock cannot be negative')
+      .default(0),
+    minStock: z.number().int().min(0, 'Minimum stock cannot be negative').optional(),
+    minimumStock: z.number().int().min(0, 'Minimum stock cannot be negative').optional(),
+    location: z.string().optional(),
+    warehouse: z.string().optional(),
   }),
 });
 
@@ -19,31 +25,26 @@ export const updateProductSchema = z.object({
   body: z.object({
     name: z.string().min(2).optional(),
     sku: z.string().min(2).optional(),
-    category: z.string().min(2).optional(),
-    unitPrice: z.number().positive().optional(),
-    currentStock: z.number().int().nonnegative().optional(),
-    minStock: z.number().int().nonnegative().optional(),
+    category: z.string().optional(),
+    unitPrice: z.number().min(0, 'Unit price cannot be negative').optional(),
+    currentStock: z.number().int().min(0, 'Current stock cannot be negative').optional(),
+    minStock: z.number().int().min(0, 'Minimum stock cannot be negative').optional(),
+    minimumStock: z.number().int().min(0, 'Minimum stock cannot be negative').optional(),
     location: z.string().optional(),
+    warehouse: z.string().optional(),
   }),
 });
 
 export const stockMovementSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid Product ID'),
+    id: z.string().uuid('Invalid Product ID').optional(),
   }),
   body: z.object({
-    type: z.enum(['IN', 'OUT', 'ADJUSTMENT']),
-    quantity: z.number().int().positive('Quantity must be greater than zero'),
+    productId: z.string().uuid('Invalid Product ID').optional(),
+    type: z.enum(['IN', 'OUT']),
+    quantity: z.number().int().positive('Movement quantity must be a positive integer'),
     remarks: z.string().optional(),
-  }),
-});
-
-export const listProductsQuerySchema = z.object({
-  query: z.object({
-    search: z.string().optional(),
-    category: z.string().optional(),
-    lowStockOnly: z.enum(['true', 'false']).optional(),
-    page: z.string().optional(),
-    limit: z.string().optional(),
+    reason: z.string().optional(),
+    referenceId: z.string().optional(),
   }),
 });

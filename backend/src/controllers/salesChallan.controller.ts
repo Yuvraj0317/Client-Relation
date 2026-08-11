@@ -5,10 +5,10 @@ import { UnauthorizedError } from '../middlewares/error.middleware';
 import { ChallanStatus } from '@prisma/client';
 
 export class SalesChallanController {
-  static async createDraft(req: Request, res: Response, next: NextFunction) {
+  static async create(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.user) throw new UnauthorizedError();
-      const challan = await SalesChallanService.createDraftChallan({
+      const challan = await SalesChallanService.createChallan({
         ...req.body,
         createdById: req.user.userId,
       });
@@ -23,13 +23,13 @@ export class SalesChallanController {
       const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
       const search = req.query.search as string;
-      const customerId = req.query.customerId as string;
       const status = req.query.status as ChallanStatus;
+      const customerId = req.query.customerId as string;
 
       const result = await SalesChallanService.getChallans({
+        search,
         status,
         customerId,
-        search,
         page,
         limit,
       });

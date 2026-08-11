@@ -58,6 +58,15 @@ export class CustomerController {
     }
   }
 
+  static async delete(req: Request, res: Response, next: NextFunction) {
+    try {
+      await CustomerService.deleteCustomer(req.params.id);
+      return ApiResponse.success(res, { message: 'Customer account deleted successfully' });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   static async addFollowUp(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.user) throw new UnauthorizedError();

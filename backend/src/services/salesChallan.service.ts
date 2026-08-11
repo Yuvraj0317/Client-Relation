@@ -1,18 +1,17 @@
 import { prisma } from '../prisma';
-import { NotFoundError, AppError, InsufficientStockError } from '../middlewares/error.middleware';
-import { ChallanStatus, MovementType, Prisma } from '@prisma/client';
+import { NotFoundError, BadRequestError, InsufficientStockError } from '../middlewares/error.middleware';
+import { ChallanStatus, MovementType } from '@prisma/client';
 
 export class SalesChallanService {
-  /**
-   * Helper to generate unique sequential Challan Number (e.g. CH-202608-0001)
-   */
   private static async generateChallanNumber(): Promise<string> {
-    const now = new Date();
-    const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const date = new Date();
+    const yearMonth = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}`;
     const prefix = `CH-${yearMonth}-`;
 
     const lastChallan = await prisma.challan.findFirst({
-      where: { challanNumber: { startsWith: prefix } },
+      where: {
+        challanNumber: { startsWith: prefix },
+      },
       orderBy: { challanNumber: 'desc' },
     });
 
@@ -28,68 +27,97 @@ export class SalesChallanService {
     return `${prefix}${String(sequence).padStart(4, '0')}`;
   }
 
-  static async createDraftChallan(data: {
+  static async createChallan(data: {
     customerId: string;
     notes?: string;
-    items: { productId: string; quantity: number }[];
+    items: Array<{ productId: string; quantity: number; unitPrice?: number }>;
     createdById: string;
   }) {
-    // 1. Verify Customer exists
     const customer = await prisma.customer.findUnique({ where: { id: data.customerId } });
     if (!customer) {
       throw new NotFoundError(`Customer with ID '${data.customerId}' not found`);
     }
 
-    // 2. Fetch product details and build snapshots & line totals
-    const itemDataList = [];
-    let totalAmount = new Prisma.Decimal(0);
-
-    for (const item of data.items) {
-      const product = await prisma.product.findUnique({ where: { id: item.productId } });
-      if (!product) {
-        throw new NotFoundError(`Product with ID '${item.productId}' not found`);
-      }
-
-      const unitPrice = product.unitPrice;
-      const lineTotal = new Prisma.Decimal(unitPrice.toString()).mul(item.quantity);
-      totalAmount = totalAmount.add(lineTotal);
-
-      itemDataList.push({
-        productId: product.id,
-        productName: product.name,
-        sku: product.sku,
-        unitPrice,
-        quantity: item.quantity,
-      });
+    if (!data.items || data.items.length === 0) {
+      throw new BadRequestError('Challan must contain at least one product item');
     }
+
+    // Business Rule 6: A product should not appear twice in the same challan
+    const productIds = data.items.map((i) => i.productId);
+    const uniqueProductIds = new Set(productIds);
+    if (uniqueProductIds.size !== productIds.length) {
+      throw new BadRequestError('A product cannot appear twice in the same delivery challan');
+    }
+
+    // Business Rule 3: Product quantity must be greater than zero
+    for (const item of data.items) {
+      if (!item.quantity || item.quantity <= 0) {
+        throw new BadRequestError('Product quantity must be greater than zero');
+      }
+    }
+
+    // Business Rule 5: Every product must exist in master catalog
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+    });
+
+    if (products.length !== productIds.length) {
+      throw new NotFoundError('One or more product items were not found in master catalog');
+    }
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    let totalAmount = 0;
+    let totalQuantity = 0;
+
+    const challanItemsData = data.items.map((item) => {
+      const prod = productMap.get(item.productId)!;
+      const itemUnitPrice = item.unitPrice !== undefined ? item.unitPrice : Number(prod.unitPrice);
+      const itemTotal = itemUnitPrice * item.quantity;
+      totalAmount += itemTotal;
+      totalQuantity += item.quantity;
+
+      // Business Rule 8: Snapshot product data
+      return {
+        productId: prod.id,
+        productName: prod.name,
+        sku: prod.sku,
+        unitPrice: itemUnitPrice,
+        quantity: item.quantity,
+      };
+    });
 
     const challanNumber = await this.generateChallanNumber();
 
-    // 3. Create Draft Challan
-    return await prisma.challan.create({
+    const challan = await prisma.challan.create({
       data: {
         challanNumber,
         customerId: data.customerId,
-        notes: data.notes,
-        status: ChallanStatus.DRAFT,
+        notes: data.notes || null,
         totalAmount,
+        status: ChallanStatus.DRAFT,
         createdById: data.createdById,
         items: {
-          create: itemDataList,
+          create: challanItemsData,
         },
       },
       include: {
-        customer: true,
-        items: { include: { product: true } },
+        customer: { select: { id: true, name: true, businessName: true, companyName: true, email: true, mobile: true } },
         createdBy: { select: { id: true, name: true, email: true } },
+        items: true,
       },
     });
+
+    return {
+      ...challan,
+      totalQuantity,
+    };
   }
 
   static async getChallans(query: {
+    search?: string;
     status?: ChallanStatus;
     customerId?: string;
-    search?: string;
     page?: number;
     limit?: number;
   }) {
@@ -99,20 +127,20 @@ export class SalesChallanService {
 
     const where: any = {};
 
+    if (query.search) {
+      where.OR = [
+        { challanNumber: { contains: query.search, mode: 'insensitive' } },
+        { customer: { name: { contains: query.search, mode: 'insensitive' } } },
+        { customer: { businessName: { contains: query.search, mode: 'insensitive' } } },
+      ];
+    }
+
     if (query.status) {
       where.status = query.status;
     }
 
     if (query.customerId) {
       where.customerId = query.customerId;
-    }
-
-    if (query.search) {
-      where.OR = [
-        { challanNumber: { contains: query.search, mode: 'insensitive' } },
-        { customer: { name: { contains: query.search, mode: 'insensitive' } } },
-        { customer: { companyName: { contains: query.search, mode: 'insensitive' } } },
-      ];
     }
 
     const [total, challans] = await Promise.all([
@@ -123,17 +151,26 @@ export class SalesChallanService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          customer: { select: { id: true, name: true, companyName: true, phone: true } },
+          customer: { select: { id: true, name: true, businessName: true, companyName: true, email: true, mobile: true } },
           createdBy: { select: { id: true, name: true } },
           confirmedBy: { select: { id: true, name: true } },
-          _count: { select: { items: true } },
+          items: true,
         },
       }),
     ]);
 
+    const formattedChallans = challans.map((ch) => ({
+      ...ch,
+      totalQuantity: ch.items.reduce((sum, item) => sum + item.quantity, 0),
+    }));
+
     return {
-      challans,
-      meta: { page, limit, total },
+      challans: formattedChallans,
+      meta: {
+        page,
+        limit,
+        total,
+      },
     };
   }
 
@@ -141,134 +178,132 @@ export class SalesChallanService {
     const challan = await prisma.challan.findUnique({
       where: { id },
       include: {
-        customer: true,
+        customer: { select: { id: true, name: true, businessName: true, companyName: true, email: true, mobile: true, address: true, gstNumber: true } },
         createdBy: { select: { id: true, name: true, email: true } },
         confirmedBy: { select: { id: true, name: true, email: true } },
         items: {
           include: {
-            product: { select: { id: true, name: true, sku: true, currentStock: true, minStock: true } },
+            product: { select: { id: true, currentStock: true, minStock: true, location: true } },
           },
         },
       },
     });
 
     if (!challan) {
-      throw new NotFoundError(`Sales Challan with ID '${id}' not found`);
+      throw new NotFoundError(`Delivery Challan with ID '${id}' not found`);
     }
 
-    return challan;
+    const totalQuantity = challan.items.reduce((sum, item) => sum + item.quantity, 0);
+
+    return {
+      ...challan,
+      totalQuantity,
+    };
   }
 
-  /**
-   * Confirm Sales Challan — Atomic Stock Deduction Transaction
-   */
-  static async confirmChallan(challanId: string, userId: string) {
-    return await prisma.$transaction(async tx => {
-      // 1. Fetch Challan & Items
+  static async confirmChallan(id: string, userId: string) {
+    return await prisma.$transaction(async (tx) => {
       const challan = await tx.challan.findUnique({
-        where: { id: challanId },
-        include: { items: true },
+        where: { id },
+        include: { items: true, customer: true },
       });
 
       if (!challan) {
-        throw new NotFoundError(`Sales Challan with ID '${challanId}' not found`);
+        throw new NotFoundError(`Delivery Challan with ID '${id}' not found`);
       }
 
-      if (challan.status !== ChallanStatus.DRAFT) {
-        throw new AppError(
-          `Cannot confirm Challan. Current status is '${challan.status}', expected 'DRAFT'`,
-          400,
-          'INVALID_STATUS_TRANSITION'
-        );
+      // Business Rule 11: A confirmed challan cannot be confirmed again
+      if (challan.status === ChallanStatus.CONFIRMED) {
+        throw new BadRequestError(`Challan '${challan.challanNumber}' is already confirmed`);
       }
 
-      // 2. Validate Stock for ALL items first
+      // Business Rule 12: A cancelled challan cannot be confirmed
+      if (challan.status === ChallanStatus.CANCELLED) {
+        throw new BadRequestError(`Cannot confirm cancelled Challan '${challan.challanNumber}'`);
+      }
+
+      // Business Rule 9 & 10: Atomic verification inside ONE transaction block
       for (const item of challan.items) {
         const product = await tx.product.findUnique({ where: { id: item.productId } });
         if (!product) {
-          throw new NotFoundError(`Product '${item.productName}' no longer exists`);
+          throw new NotFoundError(`Product '${item.productName}' (SKU: ${item.sku}) not found in database`);
         }
 
+        // Verify stock sufficiency to prevent negative stock
         if (product.currentStock < item.quantity) {
           throw new InsufficientStockError(
-            `Insufficient stock for '${product.name}' (SKU: ${product.sku}). Requested: ${item.quantity}, Available: ${product.currentStock}`
+            `Insufficient stock for product '${product.name}' (SKU: ${product.sku}). Available: ${product.currentStock}, Required: ${item.quantity}`
           );
         }
       }
 
-      // 3. Perform atomic stock deduction & log movements
+      // Deduct product stock and log OUT stock movement entries
       for (const item of challan.items) {
-        // Decrement stock in DB
-        const updatedProduct = await tx.product.updateMany({
-          where: {
-            id: item.productId,
-            currentStock: { gte: item.quantity },
-          },
+        await tx.product.update({
+          where: { id: item.productId },
           data: {
             currentStock: { decrement: item.quantity },
           },
         });
 
-        if (updatedProduct.count === 0) {
-          throw new InsufficientStockError(
-            `Stock changed concurrently for item '${item.productName}'`
-          );
-        }
-
-        // Create immutable StockMovement audit log
         await tx.stockMovement.create({
           data: {
             productId: item.productId,
             type: MovementType.OUT,
             quantity: item.quantity,
             referenceId: challan.id,
-            remarks: `Dispatch stock deduction for Challan #${challan.challanNumber}`,
+            remarks: `Delivery Challan dispatch '${challan.challanNumber}' for customer '${challan.customer.name}'`,
+            reason: `Delivery Challan dispatch '${challan.challanNumber}' for customer '${challan.customer.name}'`,
             createdById: userId,
           },
         });
       }
 
-      // 4. Update Challan Status to CONFIRMED
-      return await tx.challan.update({
-        where: { id: challanId },
+      // Update status to CONFIRMED
+      const updatedChallan = await tx.challan.update({
+        where: { id },
         data: {
           status: ChallanStatus.CONFIRMED,
-          confirmedById: userId,
           confirmedAt: new Date(),
+          confirmedById: userId,
         },
         include: {
-          customer: true,
-          items: true,
+          customer: { select: { id: true, name: true } },
           confirmedBy: { select: { id: true, name: true } },
+          items: true,
         },
       });
+
+      return {
+        ...updatedChallan,
+        totalQuantity: updatedChallan.items.reduce((sum, i) => sum + i.quantity, 0),
+      };
     });
   }
 
-  /**
-   * Cancel Sales Challan — Restores Stock if previously CONFIRMED
-   */
-  static async cancelChallan(challanId: string, userId: string) {
-    return await prisma.$transaction(async tx => {
+  static async cancelChallan(id: string, userId: string) {
+    return await prisma.$transaction(async (tx) => {
       const challan = await tx.challan.findUnique({
-        where: { id: challanId },
-        include: { items: true },
+        where: { id },
+        include: { items: true, customer: true },
       });
 
       if (!challan) {
-        throw new NotFoundError(`Sales Challan with ID '${challanId}' not found`);
+        throw new NotFoundError(`Delivery Challan with ID '${id}' not found`);
       }
 
       if (challan.status === ChallanStatus.CANCELLED) {
-        throw new AppError('Challan is already cancelled', 400, 'ALREADY_CANCELLED');
+        throw new BadRequestError(`Challan '${challan.challanNumber}' is already cancelled`);
       }
 
-      // If challan was CONFIRMED, restore stock
+      // Business Rule 13: If a confirmed challan is cancelled, restore deducted stock and log IN reversal movements
       if (challan.status === ChallanStatus.CONFIRMED) {
         for (const item of challan.items) {
           await tx.product.update({
             where: { id: item.productId },
-            data: { currentStock: { increment: item.quantity } },
+            data: {
+              currentStock: { increment: item.quantity },
+            },
           });
 
           await tx.stockMovement.create({
@@ -277,22 +312,29 @@ export class SalesChallanService {
               type: MovementType.IN,
               quantity: item.quantity,
               referenceId: challan.id,
-              remarks: `Stock restored from cancelled Challan #${challan.challanNumber}`,
+              remarks: `Stock restoration on Challan cancellation '${challan.challanNumber}'`,
+              reason: `Stock restoration on Challan cancellation '${challan.challanNumber}'`,
               createdById: userId,
             },
           });
         }
       }
 
-      // Set status to CANCELLED
-      return await tx.challan.update({
-        where: { id: challanId },
-        data: { status: ChallanStatus.CANCELLED },
+      const updatedChallan = await tx.challan.update({
+        where: { id },
+        data: {
+          status: ChallanStatus.CANCELLED,
+        },
         include: {
-          customer: true,
+          customer: { select: { id: true, name: true } },
           items: true,
         },
       });
+
+      return {
+        ...updatedChallan,
+        totalQuantity: updatedChallan.items.reduce((sum, i) => sum + i.quantity, 0),
+      };
     });
   }
 }

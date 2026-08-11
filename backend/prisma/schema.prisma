@@ -60,12 +60,17 @@ model User {
 model Customer {
   id           String           @id @default(uuid())
   name         String
-  companyName  String?
+  mobile       String           @default("")
+  phone        String?
   email        String?          @unique
-  phone        String
+  businessName String?
+  companyName  String?
+  gstNumber    String?
   address      String
   customerType CustomerType     @default(RETAIL)
   status       CustomerStatus   @default(LEAD)
+  followUpDate DateTime?
+  notes        String?
   createdById  String
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
@@ -76,6 +81,8 @@ model Customer {
   challans     Challan[]
 
   @@index([name])
+  @@index([mobile])
+  @@index([businessName])
   @@index([companyName])
   @@index([status])
   @@map("customers")
@@ -106,7 +113,9 @@ model Product {
   unitPrice    Decimal         @db.Decimal(12, 2)
   currentStock Int             @default(0)
   minStock     Int             @default(5)
+  minimumStock Int             @default(5)
   location     String          @default("Main Warehouse")
+  warehouse    String          @default("Main Warehouse")
   createdById  String
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
@@ -129,11 +138,12 @@ model StockMovement {
   quantity    Int
   referenceId String?
   remarks     String?
+  reason      String?
   createdById String
   createdAt   DateTime     @default(now())
 
   // Relations
-  product     Product      @relation(fields: [productId], references: [id])
+  product     Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdBy   User         @relation("StockMovementCreatedBy", fields: [createdById], references: [id])
 
   @@index([productId])

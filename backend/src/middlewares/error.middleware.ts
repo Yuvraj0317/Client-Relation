@@ -16,6 +16,12 @@ export class AppError extends Error {
   }
 }
 
+export class BadRequestError extends AppError {
+  constructor(message: string = 'Bad request') {
+    super(message, 400, 'BAD_REQUEST');
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(message: string = 'Resource not found') {
     super(message, 404, 'NOT_FOUND');
@@ -52,23 +58,25 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error(`[Error] ${req.method} ${req.url}:`, err);
-
   if (err instanceof AppError) {
+    console.error(`[Error ${err.statusCode}] ${req.method} ${req.url}: ${err.message}`);
     return ApiResponse.error(res, err.message, err.statusCode, err.code, err.details);
   }
 
   if (err instanceof ZodError) {
-    const formattedDetails = err.errors.map(e => ({
+    console.error(`[Validation Error 422] ${req.method} ${req.url}: ${err.issues?.[0]?.message || 'Validation failed'}`);
+    const formattedDetails = err.issues.map(e => ({
       field: e.path.join('.'),
       message: e.message
     }));
     return ApiResponse.error(res, 'Validation failed', 422, 'VALIDATION_ERROR', formattedDetails);
   }
 
+  console.error(`[Unhandled Error] ${req.method} ${req.url}:`, err?.message || err);
+
   return ApiResponse.error(
     res,
-    err.message || 'Internal server error',
+    err?.message || 'Internal server error',
     500,
     'INTERNAL_SERVER_ERROR'
   );

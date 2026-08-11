@@ -1,40 +1,52 @@
 import { Router } from 'express';
 import { SalesChallanController } from '../controllers/salesChallan.controller';
-import { authenticateJWT } from '../middlewares/auth.middleware';
-import { authorizeRoles } from '../middlewares/rbac.middleware';
 import { validateRequest } from '../middlewares/validate.middleware';
-import { createSalesChallanSchema } from '../validators/salesChallan.validator';
+import { createChallanSchema } from '../validators/salesChallan.validator';
+import { authenticate } from '../middlewares/auth.middleware';
+import { authorize } from '../middlewares/rbac.middleware';
 
 const router = Router();
 
-// Protect all sales challan routes with JWT
-router.use(authenticateJWT);
+// Protect all delivery challan routes with JWT authentication
+router.use(authenticate);
 
-// List sales challans
-router.get('/', SalesChallanController.list);
-
-// Get sales challan by ID
-router.get('/:id', SalesChallanController.getById);
-
-// Create Draft Sales Challan (ADMIN, SALES)
+// POST /api/challans & /api/sales-challans (Admin & Sales)
 router.post(
   '/',
-  authorizeRoles('ADMIN', 'SALES'),
-  validateRequest(createSalesChallanSchema),
-  SalesChallanController.createDraft
+  authorize('ADMIN', 'SALES'),
+  validateRequest(createChallanSchema),
+  SalesChallanController.create
 );
 
-// Confirm Sales Challan & Deduct Stock (ADMIN, SALES, WAREHOUSE)
-router.patch(
+// GET /api/challans & /api/sales-challans (Authenticated users)
+router.get('/', SalesChallanController.list);
+
+// GET /api/challans/:id & /api/sales-challans/:id (Authenticated users)
+router.get('/:id', SalesChallanController.getById);
+
+// POST & PATCH /api/challans/:id/confirm (Admin, Warehouse, Sales)
+router.post(
   '/:id/confirm',
-  authorizeRoles('ADMIN', 'SALES', 'WAREHOUSE'),
+  authorize('ADMIN', 'WAREHOUSE', 'SALES'),
   SalesChallanController.confirm
 );
 
-// Cancel Sales Challan & Restore Stock (ADMIN, ACCOUNTS)
+router.patch(
+  '/:id/confirm',
+  authorize('ADMIN', 'WAREHOUSE', 'SALES'),
+  SalesChallanController.confirm
+);
+
+// POST & PATCH /api/challans/:id/cancel (Admin, Accounts)
+router.post(
+  '/:id/cancel',
+  authorize('ADMIN', 'ACCOUNTS'),
+  SalesChallanController.cancel
+);
+
 router.patch(
   '/:id/cancel',
-  authorizeRoles('ADMIN', 'ACCOUNTS'),
+  authorize('ADMIN', 'ACCOUNTS'),
   SalesChallanController.cancel
 );
 

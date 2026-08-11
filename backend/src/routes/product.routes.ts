@@ -1,53 +1,60 @@
 import { Router } from 'express';
 import { ProductController } from '../controllers/product.controller';
-import { authenticateJWT } from '../middlewares/auth.middleware';
-import { authorizeRoles } from '../middlewares/rbac.middleware';
 import { validateRequest } from '../middlewares/validate.middleware';
 import {
   createProductSchema,
   updateProductSchema,
   stockMovementSchema,
 } from '../validators/product.validator';
+import { authenticate } from '../middlewares/auth.middleware';
+import { authorize } from '../middlewares/rbac.middleware';
 
 const router = Router();
 
-// Protect all product routes with JWT
-router.use(authenticateJWT);
+// Protect all product & inventory routes with JWT authentication
+router.use(authenticate);
 
-// List products
-router.get('/', ProductController.list);
+// Low Stock Alert Catalog (GET /api/products/low-stock)
+router.get('/low-stock', ProductController.list);
 
-// Get low stock alert products
-router.get('/low-stock', ProductController.getLowStock);
-
-// Get product details
-router.get('/:id', ProductController.getById);
-
-// Get stock movement history log for product
-router.get('/:id/stock-logs', ProductController.getStockLogs);
-
-// Create product (ADMIN, WAREHOUSE)
+// POST /api/products (Admin & Warehouse only)
 router.post(
   '/',
-  authorizeRoles('ADMIN', 'WAREHOUSE'),
+  authorize('ADMIN', 'WAREHOUSE'),
   validateRequest(createProductSchema),
   ProductController.create
 );
 
-// Update product (ADMIN, WAREHOUSE)
+// GET /api/products (Authenticated users)
+router.get('/', ProductController.list);
+
+// GET /api/products/:id (Authenticated users)
+router.get('/:id', ProductController.getById);
+
+// PUT /api/products/:id (Admin & Warehouse only)
 router.put(
   '/:id',
-  authorizeRoles('ADMIN', 'WAREHOUSE'),
+  authorize('ADMIN', 'WAREHOUSE'),
   validateRequest(updateProductSchema),
   ProductController.update
 );
 
-// Log manual Stock IN/OUT (ADMIN, WAREHOUSE)
+// DELETE /api/products/:id (Admin only)
+router.delete(
+  '/:id',
+  authorize('ADMIN'),
+  ProductController.delete
+);
+
+// POST /api/products/:id/stock-movement (Admin & Warehouse only)
 router.post(
   '/:id/stock-movement',
-  authorizeRoles('ADMIN', 'WAREHOUSE'),
+  authorize('ADMIN', 'WAREHOUSE'),
   validateRequest(stockMovementSchema),
-  ProductController.logStockMovement
+  ProductController.stockMovement
 );
+
+// GET /api/products/:id/stock-logs (Authenticated users)
+router.get('/:id/stock-logs', ProductController.getStockLogs);
 
 export default router;

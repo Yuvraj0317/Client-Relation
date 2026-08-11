@@ -1,35 +1,31 @@
 import { z } from 'zod';
 
-export const challanItemInputSchema = z.object({
-  productId: z.string().uuid('Invalid Product ID'),
-  quantity: z.number().int().positive('Quantity must be at least 1'),
-});
-
-export const createSalesChallanSchema = z.object({
+export const createChallanSchema = z.object({
   body: z.object({
     customerId: z.string().uuid('Invalid Customer ID'),
     notes: z.string().optional(),
-    items: z.array(challanItemInputSchema).min(1, 'Challan must contain at least 1 product item'),
+    items: z.array(
+      z.object({
+        productId: z.string().uuid('Invalid Product ID'),
+        quantity: z.number().int().positive('Item quantity must be a positive integer'),
+        unitPrice: z.number().min(0, 'Unit price cannot be negative').optional(),
+      })
+    ).min(1, 'Delivery Challan must contain at least one item'),
   }),
 });
 
-export const updateSalesChallanSchema = z.object({
+export const updateChallanSchema = z.object({
   params: z.object({
     id: z.string().uuid('Invalid Challan ID'),
   }),
   body: z.object({
-    customerId: z.string().uuid('Invalid Customer ID').optional(),
     notes: z.string().optional(),
-    items: z.array(challanItemInputSchema).min(1, 'Challan must contain at least 1 product item').optional(),
-  }),
-});
-
-export const listSalesChallansQuerySchema = z.object({
-  query: z.object({
-    status: z.enum(['DRAFT', 'CONFIRMED', 'CANCELLED']).optional(),
-    customerId: z.string().uuid().optional(),
-    search: z.string().optional(),
-    page: z.string().optional(),
-    limit: z.string().optional(),
+    items: z.array(
+      z.object({
+        productId: z.string().uuid('Invalid Product ID'),
+        quantity: z.number().int().positive(),
+        unitPrice: z.number().min(0).optional(),
+      })
+    ).optional(),
   }),
 });

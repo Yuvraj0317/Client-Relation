@@ -3,12 +3,17 @@ import { z } from 'zod';
 export const createCustomerSchema = z.object({
   body: z.object({
     name: z.string().min(2, 'Customer name is required'),
-    companyName: z.string().optional(),
+    mobile: z.string().min(5, 'Mobile number is required').optional(),
+    phone: z.string().optional(),
     email: z.string().email('Invalid email format').optional().or(z.literal('')),
-    phone: z.string().min(5, 'Phone number is required'),
+    businessName: z.string().optional(),
+    companyName: z.string().optional(),
+    gstNumber: z.string().optional(),
     address: z.string().min(3, 'Address is required'),
     customerType: z.enum(['RETAIL', 'WHOLESALE', 'DISTRIBUTOR']).default('RETAIL'),
     status: z.enum(['LEAD', 'ACTIVE', 'INACTIVE']).default('LEAD'),
+    followUpDate: z.string().datetime({ message: 'Must be a valid ISO date string' }).optional(),
+    notes: z.string().optional(),
   }),
 });
 
@@ -18,12 +23,17 @@ export const updateCustomerSchema = z.object({
   }),
   body: z.object({
     name: z.string().min(2).optional(),
-    companyName: z.string().optional(),
+    mobile: z.string().optional(),
+    phone: z.string().optional(),
     email: z.string().email().optional().or(z.literal('')),
-    phone: z.string().min(5).optional(),
+    businessName: z.string().optional(),
+    companyName: z.string().optional(),
+    gstNumber: z.string().optional(),
     address: z.string().min(3).optional(),
     customerType: z.enum(['RETAIL', 'WHOLESALE', 'DISTRIBUTOR']).optional(),
     status: z.enum(['LEAD', 'ACTIVE', 'INACTIVE']).optional(),
+    followUpDate: z.string().datetime().optional(),
+    notes: z.string().optional(),
   }),
 });
 

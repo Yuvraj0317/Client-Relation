@@ -1,5 +1,5 @@
 import { prisma } from '../prisma';
-import { ConflictError, NotFoundError, InsufficientStockError } from '../middlewares/error.middleware';
+import { NotFoundError, ConflictError, BadRequestError } from '../middlewares/error.middleware';
 import { MovementType } from '@prisma/client';
 
 export class ProductService {
@@ -8,46 +8,83 @@ export class ProductService {
     sku: string;
     category: string;
     unitPrice: number;
-    currentStock: number;
-    minStock: number;
-    location: string;
+    currentStock?: number;
+    minStock?: number;
+    minimumStock?: number;
+    location?: string;
+    warehouse?: string;
     createdById: string;
   }) {
-    const existing = await prisma.product.findUnique({
-      where: { sku: data.sku.toUpperCase() },
-    });
-
-    if (existing) {
-      throw new ConflictError(`Product with SKU '${data.sku}' already exists`);
+    if (data.unitPrice < 0) {
+      throw new BadRequestError('Unit price cannot be negative');
     }
 
-    const product = await prisma.product.create({
-      data: {
-        ...data,
-        sku: data.sku.toUpperCase(),
-      },
-    });
+    const currentStock = data.currentStock !== undefined ? data.currentStock : 0;
+    if (currentStock < 0) {
+      throw new BadRequestError('Current stock cannot be negative');
+    }
 
-    // Log initial stock movement if initial stock > 0
-    if (data.currentStock > 0) {
-      await prisma.stockMovement.create({
+    const minStockVal = data.minimumStock !== undefined
+      ? data.minimumStock
+      : (data.minStock !== undefined ? data.minStock : 5);
+
+    if (minStockVal < 0) {
+      throw new BadRequestError('Minimum stock cannot be negative');
+    }
+
+    const warehouseLocation = data.warehouse || data.location || 'Main Warehouse';
+    const normalizedSku = data.sku.toUpperCase().trim();
+
+    const existing = await prisma.product.findUnique({
+      where: { sku: normalizedSku },
+    });
+    if (existing) {
+      throw new ConflictError(`Product SKU '${normalizedSku}' already exists`);
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
         data: {
-          productId: product.id,
-          type: 'IN',
-          quantity: data.currentStock,
-          remarks: 'Initial stock setup during product creation',
+          name: data.name,
+          sku: normalizedSku,
+          category: data.category,
+          unitPrice: data.unitPrice,
+          currentStock,
+          minStock: minStockVal,
+          minimumStock: minStockVal,
+          location: warehouseLocation,
+          warehouse: warehouseLocation,
           createdById: data.createdById,
         },
       });
-    }
 
-    return product;
+      // Initial Stock Movement audit log if stock > 0
+      if (currentStock > 0) {
+        await tx.stockMovement.create({
+          data: {
+            productId: product.id,
+            type: MovementType.IN,
+            quantity: currentStock,
+            remarks: 'Initial stock intake on SKU registration',
+            reason: 'Initial stock intake on SKU registration',
+            createdById: data.createdById,
+          },
+        });
+      }
+
+      return {
+        ...product,
+        minimumStock: product.minStock,
+        warehouse: product.location,
+        isLowStock: product.currentStock <= product.minStock,
+      };
+    });
   }
 
   static async getProducts(query: {
     search?: string;
     category?: string;
-    lowStockOnly?: boolean;
+    lowStock?: boolean;
     page?: number;
     limit?: number;
   }) {
@@ -62,6 +99,7 @@ export class ProductService {
         { name: { contains: query.search, mode: 'insensitive' } },
         { sku: { contains: query.search, mode: 'insensitive' } },
         { category: { contains: query.search, mode: 'insensitive' } },
+        { warehouse: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
@@ -69,44 +107,38 @@ export class ProductService {
       where.category = { equals: query.category, mode: 'insensitive' };
     }
 
-    let products = await prisma.product.findMany({
-      where,
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        createdBy: {
-          select: { id: true, name: true, email: true },
+    const [total, products] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          createdBy: { select: { id: true, name: true, email: true } },
         },
-      },
-    });
+      }),
+    ]);
 
-    if (query.lowStockOnly) {
-      products = products.filter(p => p.currentStock <= p.minStock);
-    }
+    const formattedProducts = products.map((prod) => ({
+      ...prod,
+      minimumStock: prod.minStock,
+      warehouse: prod.location,
+      isLowStock: prod.currentStock <= prod.minStock,
+    }));
 
-    const total = products.length;
-    const paginatedProducts = products.slice(skip, skip + limit);
+    const finalProducts = query.lowStock
+      ? formattedProducts.filter((p) => p.isLowStock)
+      : formattedProducts;
 
     return {
-      products: paginatedProducts,
+      products: finalProducts,
       meta: {
         page,
         limit,
-        total,
+        total: query.lowStock ? finalProducts.length : total,
       },
     };
-  }
-
-  static async getLowStockProducts() {
-    const allProducts = await prisma.product.findMany({
-      orderBy: { currentStock: 'asc' },
-      include: {
-        createdBy: {
-          select: { id: true, name: true },
-        },
-      },
-    });
-
-    return allProducts.filter(p => p.currentStock <= p.minStock);
   }
 
   static async getProductById(id: string) {
@@ -126,7 +158,12 @@ export class ProductService {
       throw new NotFoundError(`Product with ID '${id}' not found`);
     }
 
-    return product;
+    return {
+      ...product,
+      minimumStock: product.minStock,
+      warehouse: product.location,
+      isLowStock: product.currentStock <= product.minStock,
+    };
   }
 
   static async updateProduct(id: string, data: any) {
@@ -135,43 +172,91 @@ export class ProductService {
       throw new NotFoundError(`Product with ID '${id}' not found`);
     }
 
-    if (data.sku && data.sku.toUpperCase() !== product.sku) {
-      const existing = await prisma.product.findUnique({
-        where: { sku: data.sku.toUpperCase() },
-      });
-      if (existing) {
-        throw new ConflictError(`Product SKU '${data.sku}' is already taken`);
-      }
-      data.sku = data.sku.toUpperCase();
+    if (data.unitPrice !== undefined && data.unitPrice < 0) {
+      throw new BadRequestError('Unit price cannot be negative');
     }
 
-    return await prisma.product.update({
+    if (data.currentStock !== undefined && data.currentStock < 0) {
+      throw new BadRequestError('Current stock cannot be negative');
+    }
+
+    if (data.minimumStock !== undefined || data.minStock !== undefined) {
+      const minStockVal = data.minimumStock !== undefined ? data.minimumStock : data.minStock;
+      if (minStockVal < 0) throw new BadRequestError('Minimum stock cannot be negative');
+      data.minStock = minStockVal;
+      data.minimumStock = minStockVal;
+    }
+
+    if (data.warehouse || data.location) {
+      const wh = data.warehouse || data.location;
+      data.location = wh;
+      data.warehouse = wh;
+    }
+
+    if (data.sku) {
+      const normalizedSku = data.sku.toUpperCase().trim();
+      if (normalizedSku !== product.sku) {
+        const existing = await prisma.product.findUnique({
+          where: { sku: normalizedSku },
+        });
+        if (existing) {
+          throw new ConflictError(`Product SKU '${normalizedSku}' is already taken`);
+        }
+        data.sku = normalizedSku;
+      }
+    }
+
+    const updated = await prisma.product.update({
       where: { id },
       data,
+    });
+
+    return {
+      ...updated,
+      minimumStock: updated.minStock,
+      warehouse: updated.location,
+      isLowStock: updated.currentStock <= updated.minStock,
+    };
+  }
+
+  static async deleteProduct(id: string) {
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) {
+      throw new NotFoundError(`Product with ID '${id}' not found`);
+    }
+
+    return await prisma.product.delete({
+      where: { id },
     });
   }
 
   static async logStockMovement(
     productId: string,
-    movement: { type: MovementType; quantity: number; remarks?: string },
+    data: { type: MovementType; quantity: number; remarks?: string; reason?: string; referenceId?: string },
     userId: string
   ) {
-    return await prisma.$transaction(async tx => {
+    if (data.quantity <= 0) {
+      throw new BadRequestError('Movement quantity must be greater than zero');
+    }
+
+    return await prisma.$transaction(async (tx) => {
       const product = await tx.product.findUnique({ where: { id: productId } });
       if (!product) {
         throw new NotFoundError(`Product with ID '${productId}' not found`);
       }
 
       let newStock = product.currentStock;
-      if (movement.type === 'IN') {
-        newStock += movement.quantity;
-      } else if (movement.type === 'OUT') {
-        if (product.currentStock < movement.quantity) {
-          throw new InsufficientStockError(
-            `Insufficient stock for '${product.name}'. Required: ${movement.quantity}, Available: ${product.currentStock}`
+      const reasonText = data.reason || data.remarks || 'Stock movement log';
+
+      if (data.type === MovementType.IN) {
+        newStock += data.quantity;
+      } else if (data.type === MovementType.OUT) {
+        if (product.currentStock < data.quantity) {
+          throw new BadRequestError(
+            `Insufficient stock for SKU '${product.sku}'. Current stock: ${product.currentStock}, Requested deduction: ${data.quantity}`
           );
         }
-        newStock -= movement.quantity;
+        newStock -= data.quantity;
       }
 
       const updatedProduct = await tx.product.update({
@@ -179,18 +264,75 @@ export class ProductService {
         data: { currentStock: newStock },
       });
 
-      const log = await tx.stockMovement.create({
+      const movement = await tx.stockMovement.create({
         data: {
           productId,
-          type: movement.type,
-          quantity: movement.quantity,
-          remarks: movement.remarks || `Manual stock ${movement.type} movement`,
+          type: data.type,
+          quantity: data.quantity,
+          referenceId: data.referenceId || null,
+          remarks: reasonText,
+          reason: reasonText,
           createdById: userId,
+        },
+        include: {
+          product: { select: { id: true, name: true, sku: true } },
+          createdBy: { select: { id: true, name: true, email: true } },
         },
       });
 
-      return { product: updatedProduct, movementLog: log };
+      return {
+        product: {
+          ...updatedProduct,
+          minimumStock: updatedProduct.minStock,
+          warehouse: updatedProduct.location,
+          isLowStock: updatedProduct.currentStock <= updatedProduct.minStock,
+        },
+        movement: {
+          ...movement,
+          timestamp: movement.createdAt,
+        },
+      };
     });
+  }
+
+  static async getAllStockMovements(query?: { page?: number; limit?: number }) {
+    const page = Math.max(1, query?.page || 1);
+    const limit = Math.max(1, Math.min(100, query?.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const [total, movements] = await Promise.all([
+      prisma.stockMovement.count(),
+      prisma.stockMovement.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          product: { select: { id: true, name: true, sku: true, category: true } },
+          createdBy: { select: { id: true, name: true, email: true } },
+        },
+      }),
+    ]);
+
+    const formatted = movements.map((m) => ({
+      id: m.id,
+      productId: m.productId,
+      product: m.product,
+      quantity: m.quantity,
+      type: m.type,
+      reason: m.reason || m.remarks,
+      createdBy: m.createdBy,
+      timestamp: m.createdAt,
+      createdAt: m.createdAt,
+    }));
+
+    return {
+      movements: formatted,
+      meta: {
+        page,
+        limit,
+        total,
+      },
+    };
   }
 
   static async getStockLogs(productId: string) {
@@ -199,14 +341,19 @@ export class ProductService {
       throw new NotFoundError(`Product with ID '${productId}' not found`);
     }
 
-    return await prisma.stockMovement.findMany({
+    const movements = await prisma.stockMovement.findMany({
       where: { productId },
       orderBy: { createdAt: 'desc' },
       include: {
-        createdBy: {
-          select: { id: true, name: true, email: true },
-        },
+        product: { select: { id: true, name: true, sku: true } },
+        createdBy: { select: { id: true, name: true, email: true } },
       },
     });
+
+    return movements.map((m) => ({
+      ...m,
+      reason: m.reason || m.remarks,
+      timestamp: m.createdAt,
+    }));
   }
 }

@@ -5,12 +5,17 @@ import { CustomerStatus, CustomerType } from '@prisma/client';
 export class CustomerService {
   static async createCustomer(data: {
     name: string;
-    companyName?: string;
+    mobile?: string;
+    phone?: string;
     email?: string;
-    phone: string;
+    businessName?: string;
+    companyName?: string;
+    gstNumber?: string;
     address: string;
     customerType: CustomerType;
     status: CustomerStatus;
+    followUpDate?: string;
+    notes?: string;
     createdById: string;
   }) {
     if (data.email) {
@@ -22,10 +27,24 @@ export class CustomerService {
       }
     }
 
+    const mobileNum = data.mobile || data.phone || '';
+    const busName = data.businessName || data.companyName || null;
+
     return await prisma.customer.create({
       data: {
-        ...data,
+        name: data.name,
+        mobile: mobileNum,
+        phone: mobileNum,
         email: data.email ? data.email.toLowerCase() : null,
+        businessName: busName,
+        companyName: busName,
+        gstNumber: data.gstNumber || null,
+        address: data.address,
+        customerType: data.customerType || CustomerType.RETAIL,
+        status: data.status || CustomerStatus.LEAD,
+        followUpDate: data.followUpDate ? new Date(data.followUpDate) : null,
+        notes: data.notes || null,
+        createdById: data.createdById,
       },
     });
   }
@@ -46,9 +65,12 @@ export class CustomerService {
     if (query.search) {
       where.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
+        { mobile: { contains: query.search, mode: 'insensitive' } },
+        { phone: { contains: query.search, mode: 'insensitive' } },
+        { businessName: { contains: query.search, mode: 'insensitive' } },
         { companyName: { contains: query.search, mode: 'insensitive' } },
         { email: { contains: query.search, mode: 'insensitive' } },
-        { phone: { contains: query.search, mode: 'insensitive' } },
+        { gstNumber: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
@@ -130,9 +152,34 @@ export class CustomerService {
       data.email = data.email.toLowerCase();
     }
 
+    if (data.mobile || data.phone) {
+      data.mobile = data.mobile || data.phone;
+      data.phone = data.mobile;
+    }
+
+    if (data.businessName || data.companyName) {
+      data.businessName = data.businessName || data.companyName;
+      data.companyName = data.businessName;
+    }
+
+    if (data.followUpDate) {
+      data.followUpDate = new Date(data.followUpDate);
+    }
+
     return await prisma.customer.update({
       where: { id },
       data,
+    });
+  }
+
+  static async deleteCustomer(id: string) {
+    const customer = await prisma.customer.findUnique({ where: { id } });
+    if (!customer) {
+      throw new NotFoundError(`Customer with ID '${id}' not found`);
+    }
+
+    return await prisma.customer.delete({
+      where: { id },
     });
   }
 
@@ -146,7 +193,7 @@ export class CustomerService {
       throw new NotFoundError(`Customer with ID '${customerId}' not found`);
     }
 
-    return await prisma.customerFollowUp.create({
+    const followUp = await prisma.customerFollowUp.create({
       data: {
         customerId,
         note: data.note,
@@ -154,9 +201,17 @@ export class CustomerService {
         createdById: userId,
       },
       include: {
-        createdBy: { select: { id: true, name: true } },
+        createdBy: { select: { id: true, name: true, email: true } },
       },
     });
+
+    // Optionally update customer's latest followUpDate
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { followUpDate: new Date(data.followUpDate) },
+    });
+
+    return followUp;
   }
 
   static async getFollowUps(customerId: string) {

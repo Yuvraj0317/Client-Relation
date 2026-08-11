@@ -8,6 +8,7 @@ import { ApiResponse } from './utils/apiResponse';
 import authRoutes from './routes/auth.routes';
 import customerRoutes from './routes/customer.routes';
 import productRoutes from './routes/product.routes';
+import stockRoutes from './routes/stock.routes';
 import salesChallanRoutes from './routes/salesChallan.routes';
 
 const app = express();
@@ -37,6 +38,10 @@ app.use('/api/v1/customers', customerRoutes);
 // Product & Inventory Routes
 app.use('/api/products', productRoutes);
 app.use('/api/v1/products', productRoutes);
+
+// Stock Movements Routes
+app.use('/api/stock', stockRoutes);
+app.use('/api/v1/stock', stockRoutes);
 
 // Sales Challan Routes
 app.use('/api/challans', salesChallanRoutes);
