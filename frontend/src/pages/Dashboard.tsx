@@ -111,11 +111,11 @@ export const Dashboard: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar title="Operations Overview" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
 
-        <main className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
-          {/* Quick Actions Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <main className="p-4 sm:p-6 lg:p-8 space-y-8 flex-1">
+          {/* Section 1: Quick Actions & Operations Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-section-reveal">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Operations & Logistics Summary</h1>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Operations Workspace Summary</h1>
               <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
                 Real-time stock warnings, sales revenue, and customer CRM metrics
               </p>
@@ -123,7 +123,7 @@ export const Dashboard: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate('/sales-challans/new')}
-                className="px-4 py-2.5 bg-ocean-600 hover:bg-ocean-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-ocean-600/30 transition flex items-center gap-2"
+                className="px-4 py-2.5 bg-ocean-600 hover:bg-ocean-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-ocean-600/20 transition flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 New Delivery Order
@@ -131,18 +131,18 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Metric KPI Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {/* Section 2: Metric KPI Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 animate-section-reveal">
             {/* Total Customers */}
             <div
               onClick={() => navigate('/customers')}
-              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card group"
+              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card-subtle group"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Total Customers
                 </span>
-                <div className="p-2.5 rounded-xl bg-ocean-50 dark:bg-ocean-950 text-ocean-600 dark:text-ocean-400 group-hover:scale-110 transition">
+                <div className="p-2.5 rounded-xl bg-ocean-50 dark:bg-ocean-950 text-ocean-600 dark:text-ocean-400 group-hover:scale-105 transition">
                   <Users className="w-5 h-5" />
                 </div>
               </div>
@@ -155,13 +155,13 @@ export const Dashboard: React.FC = () => {
             {/* Total SKU Inventory */}
             <div
               onClick={() => navigate('/inventory')}
-              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card group"
+              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card-subtle group"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Master Products
                 </span>
-                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition">
+                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition">
                   <Package className="w-5 h-5" />
                 </div>
               </div>
@@ -174,13 +174,13 @@ export const Dashboard: React.FC = () => {
             {/* Low Stock Warnings */}
             <div
               onClick={() => navigate('/inventory')}
-              className="bg-white dark:bg-surface-cardDark border border-amber-300 dark:border-amber-500/40 p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-amber-500 transition shadow-sm tilt-card group"
+              className="bg-white dark:bg-surface-cardDark border border-amber-300 dark:border-amber-500/40 p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-amber-500 transition shadow-sm tilt-card-subtle group"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                   Low Stock Warnings
                 </span>
-                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition">
+                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
               </div>
@@ -195,13 +195,13 @@ export const Dashboard: React.FC = () => {
             {/* Confirmed Sales Revenue */}
             <div
               onClick={() => navigate('/sales-challans')}
-              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card group"
+              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card-subtle group"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Confirmed Sales
                 </span>
-                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition">
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition">
                   <TrendingUp className="w-5 h-5" />
                 </div>
               </div>
@@ -214,8 +214,8 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Section: Low Stock Warning & Recent Activity Table */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Section 3: Recent Activity Table & Restock Intelligence */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-section-reveal">
             {/* Recent Challans List */}
             <div className="lg:col-span-2 space-y-3.5">
               <div className="flex items-center justify-between">

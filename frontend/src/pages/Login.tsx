@@ -13,6 +13,30 @@ export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Subtle 1-2 degree mouse tilt state for desktop hover
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Check if user prefers reduced motion or is on touch device
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+
+    // Constrain tilt strictly to max 1.5 degrees
+    const rotateX = Math.max(-1.5, Math.min(1.5, (-y / rect.height) * 3));
+    const rotateY = Math.max(-1.5, Math.min(1.5, (x / rect.width) * 3));
+
+    setTilt({ rotateX, rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    // Return naturally to original position
+    setTilt({ rotateX: 0, rotateY: 0 });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -67,7 +91,7 @@ export const Login: React.FC = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-ambient-glow transition-colors duration-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-12 h-12 rounded-xl bg-ocean-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-ocean-600/30">
+          <div className="w-12 h-12 rounded-xl bg-ocean-600 flex items-center justify-center text-white text-xl font-bold shadow-md shadow-ocean-600/20">
             <Layers className="w-6 h-6 text-white" />
           </div>
         </div>
@@ -80,7 +104,15 @@ export const Login: React.FC = () => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
-        <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark py-8 px-6 shadow-xl rounded-2xl sm:px-10 tilt-card">
+        <div
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            transform: `perspective(1000px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
+            transition: tilt.rotateX === 0 && tilt.rotateY === 0 ? 'transform 0.4s ease-out' : 'transform 0.1s ease-out',
+          }}
+          className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark py-8 px-6 shadow-xl rounded-2xl sm:px-10 preserve-3d"
+        >
           {error && (
             <div className="mb-6 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-400 text-xs font-medium flex items-center gap-2">
               <KeyRound className="w-4 h-4 shrink-0" />
@@ -120,7 +152,7 @@ export const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 px-4 bg-ocean-600 hover:bg-ocean-700 text-white font-semibold rounded-xl shadow-md shadow-ocean-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
+              className="w-full mt-2 py-3 px-4 bg-ocean-600 hover:bg-ocean-700 text-white font-semibold rounded-xl shadow-md shadow-ocean-600/20 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
             >
               {loading ? 'Authenticating...' : 'Sign In to ERP Portal'}
               <ArrowRight className="w-4 h-4" />
