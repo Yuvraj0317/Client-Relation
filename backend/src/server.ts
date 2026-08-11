@@ -13,19 +13,30 @@ import salesChallanRoutes from './routes/salesChallan.routes';
 
 const app = express();
 
-// Global Middlewares
-app.use(cors());
+// Production CORS Middleware Configuration
+const allowedOrigins = env.CORS_ORIGIN === '*' ? '*' : env.CORS_ORIGIN.split(',').map((o) => o.trim());
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Healthcheck Route
-app.get('/health', (req, res) => {
+// Healthcheck Endpoint: GET /health & GET /api/health
+const healthHandler = (req: express.Request, res: express.Response) => {
   return ApiResponse.success(res, {
     status: 'OK',
     service: 'Mini ERP + CRM API Gateway',
+    environment: env.NODE_ENV,
     timestamp: new Date().toISOString(),
   });
-});
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // Authentication Routes
 app.use('/api/auth', authRoutes);
