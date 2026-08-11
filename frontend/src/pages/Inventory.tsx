@@ -138,21 +138,21 @@ export const Inventory: React.FC = () => {
       header: 'SKU / PRODUCT',
       cell: (p: Product) => (
         <div>
-          <p className="font-bold text-mono-900 dark:text-white">{p.name}</p>
-          <p className="text-xs font-mono text-mono-500">SKU: {p.sku}</p>
+          <p className="font-bold text-slate-900 dark:text-white">{p.name}</p>
+          <p className="text-xs font-mono text-slate-500">SKU: {p.sku}</p>
         </div>
       ),
     },
     {
       header: 'CATEGORY',
       cell: (p: Product) => (
-        <span className="text-xs font-mono text-mono-500 uppercase">{p.category || 'General'}</span>
+        <span className="text-xs font-mono text-slate-500 uppercase">{p.category || 'General'}</span>
       ),
     },
     {
       header: 'UNIT PRICE',
       cell: (p: Product) => (
-        <span className="font-mono font-semibold text-mono-900 dark:text-white">
+        <span className="font-mono font-semibold text-slate-900 dark:text-white">
           ₹{Number(p.unitPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </span>
       ),
@@ -163,10 +163,10 @@ export const Inventory: React.FC = () => {
         const isLow = p.currentStock <= p.minStock;
         return (
           <div className="font-mono text-xs">
-            <span className={`font-bold ${isLow ? 'text-mono-900 dark:text-white underline decoration-mono-400 font-extrabold' : 'text-mono-800 dark:text-mono-200'}`}>
+            <span className={`font-bold ${isLow ? 'text-slate-900 dark:text-white underline font-extrabold' : 'text-slate-800 dark:text-slate-200'}`}>
               {p.currentStock}
             </span>
-            <span className="text-mono-400"> / {p.minStock} min</span>
+            <span className="text-slate-400"> / {p.minStock} min</span>
           </div>
         );
       },
@@ -187,7 +187,7 @@ export const Inventory: React.FC = () => {
               e.stopPropagation();
               setSelectedProductForStock(p);
             }}
-            className="px-2.5 py-1 text-xs font-mono font-bold bg-mono-900 text-white dark:bg-white dark:text-black rounded-lg shadow-sm hover:bg-mono-800 transition"
+            className="px-2.5 py-1 text-xs font-mono font-bold bg-apple-blue text-white rounded-lg shadow-sm hover:bg-apple-blueHover transition"
           >
             Adjust
           </button>
@@ -196,7 +196,7 @@ export const Inventory: React.FC = () => {
               e.stopPropagation();
               openHistoryDrawer(p);
             }}
-            className="p-1 text-mono-500 hover:text-mono-900 dark:hover:text-white rounded-lg border border-mono-200 dark:border-mono-800"
+            className="p-1 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg border border-slate-200 dark:border-slate-800"
             title="View Audit Log"
           >
             <History className="w-3.5 h-3.5" />
@@ -207,7 +207,7 @@ export const Inventory: React.FC = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-mono-100 dark:bg-surface-dark text-mono-900 dark:text-white font-sans transition-colors duration-200">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-white font-sans transition-colors duration-200">
       <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar title="Inventory Catalog" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
@@ -216,16 +216,16 @@ export const Inventory: React.FC = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-up">
             <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-mono-900 dark:text-white">
-                INVENTORY MASTER
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                Inventory Catalog
               </h1>
-              <p className="text-xs text-mono-500 dark:text-mono-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 SKU product master catalog and stock level control.
               </p>
             </div>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="px-4 py-2.5 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black text-xs sm:text-sm font-extrabold rounded-xl shadow-sm transition flex items-center gap-2"
+              className="px-4 py-2.5 bg-apple-blue hover:bg-apple-blueHover text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-md shadow-apple-blue/20 transition flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               New Product SKU
@@ -233,27 +233,27 @@ export const Inventory: React.FC = () => {
           </div>
 
           {/* Filters Bar */}
-          <div className="bg-white dark:bg-surface-cardDark border border-mono-200 dark:border-surface-borderDark rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-up">
+          <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-up">
             {/* Search Input */}
             <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-mono-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search by SKU code, name..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs sm:text-sm text-mono-900 dark:text-white placeholder-mono-400 focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-apple-blue transition"
               />
             </div>
 
             {/* Segmented Filter Pills */}
-            <div className="flex items-center gap-1 bg-mono-100 dark:bg-mono-950 p-1 rounded-xl border border-mono-200 dark:border-mono-800 w-full sm:w-auto">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-auto">
               <button
                 onClick={() => setStockFilter('ALL')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
                   stockFilter === 'ALL'
-                    ? 'bg-mono-900 text-white dark:bg-white dark:text-black shadow-sm'
-                    : 'text-mono-600 dark:text-mono-400 hover:text-mono-900 dark:hover:text-white'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 ALL SKUs
@@ -262,8 +262,8 @@ export const Inventory: React.FC = () => {
                 onClick={() => setStockFilter('LOW')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
                   stockFilter === 'LOW'
-                    ? 'bg-mono-900 text-white dark:bg-white dark:text-black shadow-sm'
-                    : 'text-mono-600 dark:text-mono-400 hover:text-mono-900 dark:hover:text-white'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <AlertTriangle className="w-3.5 h-3.5" />
@@ -293,14 +293,14 @@ export const Inventory: React.FC = () => {
         maxWidth="lg"
       >
         {formError && (
-          <div className="mb-4 p-3 rounded-xl bg-mono-100 dark:bg-mono-900 border border-mono-300 dark:border-mono-700 text-mono-900 dark:text-mono-100 text-xs">
+          <div className="mb-4 p-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs">
             {formError}
           </div>
         )}
         <form onSubmit={handleCreateProduct} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+              <label className="block text-[10px] font-mono font-extrabold text-slate-500 uppercase mb-1">
                 SKU Code *
               </label>
               <input
@@ -309,11 +309,11 @@ export const Inventory: React.FC = () => {
                 placeholder="SKU-HYD-100"
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-mono"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-apple-blue transition font-mono"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+              <label className="block text-[10px] font-mono font-extrabold text-slate-500 uppercase mb-1">
                 Product Name *
               </label>
               <input
@@ -322,11 +322,11 @@ export const Inventory: React.FC = () => {
                 placeholder="Hydraulic Cylinder 100mm"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-apple-blue transition"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+              <label className="block text-[10px] font-mono font-extrabold text-slate-500 uppercase mb-1">
                 Unit Price (₹) *
               </label>
               <input
@@ -337,11 +337,11 @@ export const Inventory: React.FC = () => {
                 placeholder="4500.00"
                 value={formData.unitPrice}
                 onChange={(e) => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-mono"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-apple-blue transition font-mono"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+              <label className="block text-[10px] font-mono font-extrabold text-slate-500 uppercase mb-1">
                 Initial Stock *
               </label>
               <input
@@ -351,11 +351,11 @@ export const Inventory: React.FC = () => {
                 placeholder="20"
                 value={formData.currentStock}
                 onChange={(e) => setFormData({ ...formData, currentStock: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-mono"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-apple-blue transition font-mono"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+              <label className="block text-[10px] font-mono font-extrabold text-slate-500 uppercase mb-1">
                 Minimum Stock Level *
               </label>
               <input
@@ -365,11 +365,11 @@ export const Inventory: React.FC = () => {
                 placeholder="5"
                 value={formData.minStock}
                 onChange={(e) => setFormData({ ...formData, minStock: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-mono"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-apple-blue transition font-mono"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+              <label className="block text-[10px] font-mono font-extrabold text-slate-500 uppercase mb-1">
                 Category
               </label>
               <input
@@ -377,23 +377,23 @@ export const Inventory: React.FC = () => {
                 placeholder="Hydraulics"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-apple-blue transition"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-mono-200 dark:border-mono-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 text-xs font-mono font-bold border border-mono-200 dark:border-mono-800 rounded-xl text-mono-600 dark:text-mono-400 hover:text-mono-900 dark:hover:text-white transition"
+              className="px-4 py-2 text-xs font-mono font-bold border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black text-xs font-extrabold rounded-xl shadow-sm transition disabled:opacity-50"
+              className="px-4 py-2 bg-apple-blue hover:bg-apple-blueHover text-white text-xs font-extrabold rounded-xl shadow-md shadow-apple-blue/20 transition disabled:opacity-50"
             >
               {submitting ? 'Saving...' : 'Save Product SKU'}
             </button>
@@ -410,13 +410,13 @@ export const Inventory: React.FC = () => {
           maxWidth="md"
         >
           <div className="space-y-4">
-            <div className="p-3 bg-mono-50 dark:bg-mono-950 rounded-xl border border-mono-200 dark:border-mono-800 flex items-center justify-between font-mono text-xs">
-              <span className="text-mono-500">Current Balance:</span>
-              <span className="font-extrabold text-mono-900 dark:text-white">{selectedProductForStock.currentStock} Units</span>
+            <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between font-mono text-xs">
+              <span className="text-slate-500">Current Balance:</span>
+              <span className="font-extrabold text-slate-900 dark:text-white">{selectedProductForStock.currentStock} Units</span>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+              <label className="block text-[10px] font-mono font-extrabold text-slate-500 uppercase mb-1">
                 Adjustment Quantity *
               </label>
               <input
@@ -425,12 +425,12 @@ export const Inventory: React.FC = () => {
                 required
                 value={stockAdjustmentQty}
                 onChange={(e) => setStockAdjustmentQty(parseInt(e.target.value) || 1)}
-                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-mono"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-apple-blue transition font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+              <label className="block text-[10px] font-mono font-extrabold text-slate-500 uppercase mb-1">
                 Adjustment Notes
               </label>
               <input
@@ -438,16 +438,16 @@ export const Inventory: React.FC = () => {
                 placeholder="Reason (e.g. Purchase Receipt, Stock Damage)"
                 value={stockNotes}
                 onChange={(e) => setStockNotes(e.target.value)}
-                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-apple-blue transition"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-mono-200 dark:border-mono-800">
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 disabled={submitting}
                 onClick={() => handleStockAdjustment('IN')}
-                className="py-2.5 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black text-xs font-extrabold rounded-xl shadow-sm transition flex items-center justify-center gap-1.5"
+                className="py-2.5 bg-apple-blue hover:bg-apple-blueHover text-white text-xs font-extrabold rounded-xl shadow-md shadow-apple-blue/20 transition flex items-center justify-center gap-1.5"
               >
                 <ArrowDownRight className="w-4 h-4" /> Stock IN (+)
               </button>
@@ -455,7 +455,7 @@ export const Inventory: React.FC = () => {
                 type="button"
                 disabled={submitting}
                 onClick={() => handleStockAdjustment('OUT')}
-                className="py-2.5 border border-mono-300 dark:border-mono-700 bg-mono-100 dark:bg-mono-900 hover:bg-mono-200 dark:hover:bg-mono-800 text-mono-900 dark:text-white text-xs font-extrabold rounded-xl transition flex items-center justify-center gap-1.5"
+                className="py-2.5 border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-900 dark:text-white text-xs font-extrabold rounded-xl transition flex items-center justify-center gap-1.5"
               >
                 <ArrowUpRight className="w-4 h-4" /> Stock OUT (-)
               </button>
@@ -468,16 +468,16 @@ export const Inventory: React.FC = () => {
       {selectedProductForHistory && (
         <div className="fixed inset-0 z-50 flex justify-end no-print">
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedProductForHistory(null)} />
-          <div className="relative w-full max-w-md bg-white dark:bg-surface-cardDark border-l border-mono-200 dark:border-surface-borderDark h-full z-10 p-6 flex flex-col justify-between shadow-2xl animate-fade-up">
+          <div className="relative w-full max-w-md bg-white dark:bg-surface-cardDark border-l border-slate-200 dark:border-surface-borderDark h-full z-10 p-6 flex flex-col justify-between shadow-2xl animate-fade-up">
             <div>
-              <div className="flex items-center justify-between pb-4 border-b border-mono-200 dark:border-mono-800">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
                 <div>
-                  <h2 className="text-base font-bold text-mono-900 dark:text-white">{selectedProductForHistory.name}</h2>
-                  <p className="text-xs text-mono-500 font-mono">SKU: {selectedProductForHistory.sku}</p>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">{selectedProductForHistory.name}</h2>
+                  <p className="text-xs text-slate-500 font-mono">SKU: {selectedProductForHistory.sku}</p>
                 </div>
                 <button
                   onClick={() => setSelectedProductForHistory(null)}
-                  className="p-1 text-mono-400 hover:text-mono-900 dark:hover:text-white rounded-lg border border-mono-200 dark:border-mono-800"
+                  className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg border border-slate-200 dark:border-slate-800"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -485,23 +485,23 @@ export const Inventory: React.FC = () => {
 
               {/* Movement Records List */}
               <div className="mt-6 space-y-3 max-h-[75vh] overflow-y-auto pr-1">
-                <h3 className="text-xs font-mono font-bold text-mono-500 uppercase tracking-wider">
+                <h3 className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider">
                   Audit Movement Log ({movements.length})
                 </h3>
                 {loadingMovements ? (
-                  <p className="text-xs text-mono-500 font-mono py-4 text-center">Loading audit log...</p>
+                  <p className="text-xs text-slate-500 font-mono py-4 text-center">Loading audit log...</p>
                 ) : movements.length === 0 ? (
-                  <p className="text-xs text-mono-500 font-mono py-4 text-center">No stock movement history found.</p>
+                  <p className="text-xs text-slate-500 font-mono py-4 text-center">No stock movement history found.</p>
                 ) : (
                   movements.map((m) => (
-                    <div key={m.id} className="p-3 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl space-y-1">
+                    <div key={m.id} className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
                       <div className="flex items-center justify-between font-mono text-xs">
-                        <span className="font-extrabold uppercase text-mono-900 dark:text-white">
+                        <span className="font-extrabold uppercase text-slate-900 dark:text-white">
                           [{m.type}] {m.quantity} Units
                         </span>
-                        <span className="text-mono-500">{new Date(m.createdAt).toLocaleDateString()}</span>
+                        <span className="text-slate-500">{new Date(m.createdAt).toLocaleDateString()}</span>
                       </div>
-                      <p className="text-xs text-mono-600 dark:text-mono-400">{m.remarks || 'Routine stock record'}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">{m.remarks || 'Routine stock record'}</p>
                     </div>
                   ))
                 )}

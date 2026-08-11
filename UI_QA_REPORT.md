@@ -1,71 +1,96 @@
-# 100% Monochrome UI Rebuild — QA & Verification Report 🖤
+# Premium Operations UI Rebuild — QA & Verification Report 🎨
 
-This document records the complete visual rebuild of the **Fundsroom Mini ERP + CRM Operations Portal** into an Apple-inspired, **100% Monochrome (Black, White, Gray)** enterprise interface.
-
----
-
-## 📸 1. Rebuilt Visual Architecture & Removed Colors
-
-| Component / Screen | Former Implementation | 100% Monochrome Rebuild Implementation |
-| :--- | :--- | :--- |
-| **Color System** | Ocean blue (`#0284c7`), cyan, sky, indigo, purple, red, green, yellow. | **100% Monochrome Palette**: Black (`#000000`, `#050505`), White (`#FFFFFF`, `#FAFAFA`), Gray (`#111111` to `#E5E5E5`). All decorative blue and colored highlights completely eliminated. |
-| **Operational Badges** | Red (Cancelled), Green (Confirmed), Yellow (Low stock), Blue (Active). | **Monochrome Status System**: `CONFIRMED`/`ACTIVE` (Solid black/white inverted pill), `DRAFT`/`PENDING` (Light gray outlined pill), `CANCELLED`/`INACTIVE` (Dark outlined pill), `LOW STOCK` (Monochrome warning icon + bold mono text). |
-| **`Login.tsx`** | Blue glow centered card. | **Full-Screen Monochrome Depth Canvas** (`bg-mono-canvas`): Small uppercase identifier (`FUNDSROOM ERP + CRM OPERATIONS`), `Welcome back` heading, floating slate input containers, inverted Sign In button (`hover:scale-[1.01] active:scale-[0.98]`), and secondary demo role selector. |
-| **`Dashboard.tsx`** | Floating card metrics grid with blue icons. | **Operations Workspace**: Inverted primary action button (`+ New Delivery Order`), **Quiet Horizontal Metrics Row** (Total Customers, Master Products, Low Stock Warnings, Confirmed Sales) with 3XL numbers and thin hairline dividers—NO colors or colored icons. |
-| **`Sidebar.tsx`** | Blue link hover and blue indicator lines. | **Enterprise Navigation Drawer**: Black & white surface, active link highlighted by solid inverted contrast (`bg-mono-900 text-white dark:bg-white dark:text-black font-bold`) and crisp monochrome left indicator line. |
-| **`Navbar.tsx`** | Blue role buttons and blue theme icons. | Monochrome title, role switcher, and theme selector (`System`, `Light`, `Dark`) using clean grayscale borders and contrast. |
-| **`Workspaces`** | Colored status tabs & progress bars. | Monochrome segmented filter tabs (`ALL`, `DRAFT`, `CONFIRMED`, `CANCELLED`), step-by-step guided Challan Builder (`1 CUSTOMER → 2 PRODUCTS → 3 QUANTITY → 4 STOCK CHECK → 5 TOTAL → 6 CONFIRM`), and printable B&W delivery note view (`@media print`). |
+This document records the visual rebuild of the **Fundsroom Mini ERP + CRM Operations Portal** blending Apple-inspired visual restraint, progressive scroll disclosure, and generous whitespace with a **Restrained Apple Blue (`#0071E3`) Accent (10-15%)** and an **85-90% Neutral Palette**.
 
 ---
 
-## 🛠️ 2. Color Code Audit Verification
+## 🎨 1. Design & Color System Architecture
 
-A search across the entire `frontend/src` codebase for decorative color tokens returned **0 results**:
-- `ocean`: `0 matches`
-- `emerald`: `0 matches`
-- `rose`: `0 matches`
-- `amber`: `0 matches`
-- `indigo`: `0 matches`
-
-All visual hierarchy is generated strictly through **font size, font weight, contrast, borders, and generous whitespace**.
+- **Primary Base Palette (85–90%)**: Slate black (`#050505`), charcoal (`#0B0B0B`), white (`#FFFFFF`), off-white (`#F5F5F5`), grays (`#242424`, `#666666`, `#E5E5E5`).
+- **Restrained Accent (10–15%)**: Apple Blue (`#0071E3`) reserved strictly for primary action CTAs, active links, active navigation indicator dot/line, and input focus states.
+- **Removed Decorative Colors**: Purple, violet, cyan, green, emerald, yellow, amber, orange, red, and pink classes were completely removed across all 7 views and shell components.
 
 ---
 
-## 🌓 3. Theme Engine & System Preference Testing
+## 📸 2. Component & Page Rebuild Transformations
 
-- **System Mode (`prefers-color-scheme`)**: Dynamically toggles between Light and Dark monochrome palettes.
-- **Light Theme**: Background `#F5F5F5` / `#FAFAFA`, surfaces `#FFFFFF`, text `#111111`, borders `#E5E5E5`.
-- **Dark Theme**: Background `#050505`, surfaces `#0D0D0D` / `#111111`, text `#FFFFFF`, borders `#222222`.
+| Component / Page | Visual Rebuild & Implementation Details |
+| :--- | :--- |
+| **`Login.tsx`** | Full-screen abstract environment canvas (`.bg-abstract-canvas`), `FUNDSROOM ERP + CRM OPERATIONS` identifier, `Welcome back` heading, floating input containers with `#0071E3` focus border, primary Apple Blue Sign In button (`hover:translate-y-[-1px] active:scale-[0.98]`), and secondary demo role selector. Max 0.5–1 degree pointer tilt. |
+| **`Dashboard.tsx`** | Operations Overview hero header with title + Solid Apple Blue CTA button (`+ New Delivery Order`), **Quiet Horizontal Metric Strip** (Total Customers, Master Products, Low Stock Warnings, Confirmed Sales) with 3XL numbers and hairline dividers—NO colored cards, Sales Orders Activity Table, and Inventory Intelligence callout list. |
+| **`Sidebar.tsx`** | Neutral slate surface, compact navigation links, active menu item highlighted by solid contrast (`bg-slate-900 text-white dark:bg-white dark:text-black font-bold`) and a small `#0071E3` blue left indicator line. |
+| **`Navbar.tsx`** | Workspace header with monochrome breadcrumb context, active user session pill, and Theme Switcher controls (`System`, `Light`, `Dark`). |
+| **`Badge.tsx`** | **Neutral Operational Status System**: `CONFIRMED`/`ACTIVE` (Solid black/white inverted pill), `DRAFT`/`PENDING` (Light gray outlined pill), `CANCELLED`/`INACTIVE` (Dark outlined pill with strikethrough), `LOW STOCK` (Neutral warning icon + bold mono text). |
+| **`Customers.tsx`** | Business data directory workspace, sticky table header, buyer classification pills (`RETAILER`, `WHOLESALER`, `DISTRIBUTOR`), Apple Blue primary CTA, and slide-over **Follow-up Timeline** drawer. |
+| **`Inventory.tsx`** | High-density SKU master table, low-stock alert highlights, Stock IN/OUT adjustment modal with distinct operation buttons (Solid Apple Blue button for Stock IN, outlined button for Stock OUT), and movement audit log drawer. |
+| **`SalesChallans.tsx`** | Segmented filter controls (`ALL`, `DRAFT`, `CONFIRMED`, `CANCELLED`), Apple Blue primary CTA, and delivery order directory table. |
+| **`CreateChallan.tsx`** | Step-by-step guided Challan Builder (`01 CUSTOMER → 02 PRODUCTS → 03 QUANTITY → 04 STOCK CHECK → 05 TOTAL → 06 CONFIRM`), dynamic line item management, and Apple Blue Save & Confirm button. |
+| **`ChallanDetail.tsx`** | Printable delivery note document, GST metadata header, itemized pricing snapshots, Apple Blue Confirm Dispatch CTA, and `@media print` clean B&W print layout. |
 
 ---
 
-## 🧪 4. Build & Backend Test Verification Results
+## 🎬 3. Motion & Animation System
+
+- **Entrance Motion**: Keyframe fade-up (`.animate-fade-up`) opacity 0 -> 1, translateY 18px -> 0 over 500–700ms (`cubic-bezier(0.16, 1, 0.3, 1)`).
+- **Desktop Pointer Tilt**: Max 0.5–1 degree pointer-based subtle perspective response (`.tilt-card-subtle`).
+- **Reduced Motion**: Disables all scroll reveals, card tilts, and transitions under `@media (prefers-reduced-motion: reduce)`.
+- **Zero Heavy 3D Frameworks**: No Three.js, GSAP, WebGL, or particle libraries used.
+
+---
+
+## 📱 4. Responsive & Accessibility Testing
+
+- **Viewports Tested**: `1920x1080` (Desktop), `1440x900` (Laptop), `1366x768` (Standard laptop), `768x1024` (Tablet), `375x812` (Mobile).
+- **Mobile Drawer**: Collapsible mobile sidebar overlay with backdrop blur.
+- **Accessibility**: High contrast typography, keyboard navigation focus rings (`ring-apple-blue`), and semantic HTML elements.
+
+---
+
+## 🧪 5. Build & Test Verification
 
 1. **Frontend Production Build (`npm run build`)**:
    ```text
    vite v5.4.21 building for production...
    ✓ 1551 modules transformed.
    dist/index.html                   0.82 kB │ gzip:  0.48 kB
-   dist/assets/index-OrJLkSB2.css   28.40 kB │ gzip:  5.46 kB
-   dist/assets/index-D1BRJLM0.js   309.14 kB │ gzip: 88.91 kB
-   ✓ built in 4.37s
+   dist/assets/index-C8qSFASk.css   27.63 kB │ gzip:  5.62 kB
+   dist/assets/index-BTxSAjVZ.js   312.05 kB │ gzip: 89.47 kB
+   ✓ built in 4.69s
    ```
-   - **Result**: `0 TypeScript Errors`, `0 Vite Build Errors`.
+   - **Result**: `0 TypeScript Errors`, `0 Vite Build Errors`, `0 PostCSS Errors`, `0 Tailwind Errors`.
 
-2. **Backend Regression Verification Test Suites**:
-   - `test_phase3_auth.ts`: **8/8 PASSED**
-   - `test_phase4_crm.ts`: **9/9 PASSED**
-   - `test_phase5_inventory.ts`: **8/8 PASSED**
-   - `test_phase6_challan.ts`: **13/13 PASSED**
-   - `test_phase8_integration.ts`: **24/24 PASSED**
-   - **Total**: `62/62 PASSED` — Zero regression on backend API contracts, RBAC permissions, stock deduction, or status transitions.
+2. **Backend Regression Verification Test Suite (`test_phase8_integration.ts`)**:
+   - Authentication (Admin, Sales, Warehouse, Accounts): `4/4 PASSED`
+   - Customer CRM & Follow-ups: `4/4 PASSED`
+   - Inventory SKU Catalog & Stock Movements: `4/4 PASSED`
+   - Sales Delivery Challans & Stock Deduction: `6/6 PASSED`
+   - Validation & Security Boundaries: `6/6 PASSED`
+   - **Total**: **`24/24 PASSED`** (100% Zero Backend Regression).
 
 ---
 
-## 🏁 5. Final QA Status
+## 🏁 6. Final Acceptance Checklist
 
-- Console Errors: `0`
-- Broken Routes: `0`
-- Remaining Color Accents: `0`
-- Layout Overflow Issues: `0`
-- **Overall Rebuild Status**: `PASS (100% Monochrome Enterprise Product)`
+- [x] Backend untouched
+- [x] API contracts untouched
+- [x] Authentication works
+- [x] RBAC works
+- [x] Login works
+- [x] Dashboard works
+- [x] Customers works
+- [x] Inventory works
+- [x] Challans work
+- [x] Print works
+- [x] Light mode works
+- [x] Dark mode works
+- [x] System theme works
+- [x] Restrained Apple Blue accent (`#0071E3`) used for primary CTAs/links/focus states
+- [x] 85–90% neutral base palette
+- [x] No red/green/yellow traffic light badges
+- [x] Scroll reveal & reduced motion support
+- [x] Responsive mobile drawer
+- [x] 0 invalid Tailwind classes
+- [x] 0 PostCSS/Vite errors
+- [x] 0 TypeScript errors
+- [x] `npm run build` succeeds in 4.69s
+- [x] `frontend/UI_QA_REPORT.md` created

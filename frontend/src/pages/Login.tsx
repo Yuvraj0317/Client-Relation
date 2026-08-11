@@ -13,7 +13,7 @@ export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Desktop Pointer Tilt (Max 0.5 - 1 Degree)
+  // Desktop Pointer Tilt (Max 1 Degree)
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -69,22 +69,22 @@ export const Login: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-mono-100 dark:bg-surface-dark text-mono-900 dark:text-white flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-mono-canvas transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-white flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-abstract-canvas transition-colors duration-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md animate-fade-up">
         {/* Brand Tag */}
         <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-mono-900 dark:bg-white text-white dark:text-black flex items-center justify-center font-bold shadow-sm">
-            <Layers className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-lg bg-apple-blue text-white flex items-center justify-center font-bold shadow-md shadow-apple-blue/20">
+            <Layers className="w-4 h-4 text-white" />
           </div>
-          <span className="text-xs font-mono font-extrabold uppercase tracking-widest text-mono-500 dark:text-mono-400">
+          <span className="text-xs font-mono font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
             FUNDSROOM ERP + CRM OPERATIONS
           </span>
         </div>
 
-        <h2 className="text-center text-2xl sm:text-3xl font-extrabold tracking-tight text-mono-900 dark:text-white">
+        <h2 className="text-center text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
           Welcome back
         </h2>
-        <p className="mt-1.5 text-center text-xs sm:text-sm text-mono-500 dark:text-mono-400">
+        <p className="mt-1.5 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
           Sign in to continue to your operations workspace.
         </p>
       </div>
@@ -97,10 +97,10 @@ export const Login: React.FC = () => {
             transform: `perspective(1000px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
             transition: tilt.rotateX === 0 && tilt.rotateY === 0 ? 'transform 0.4s ease-out' : 'transform 0.1s ease-out',
           }}
-          className="bg-white dark:bg-surface-cardDark border border-mono-200 dark:border-surface-borderDark py-8 px-6 sm:px-10 shadow-2xl rounded-2xl"
+          className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark py-8 px-6 sm:px-10 shadow-2xl rounded-2xl"
         >
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-mono-100 dark:bg-mono-900 border border-mono-300 dark:border-mono-700 text-mono-900 dark:text-mono-100 text-xs font-medium flex items-center gap-2">
+            <div className="mb-5 p-3.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-medium flex items-center gap-2">
               <KeyRound className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -108,7 +108,7 @@ export const Login: React.FC = () => {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-[11px] font-mono font-extrabold text-mono-600 dark:text-mono-400 uppercase tracking-wider mb-1.5">
+              <label className="block text-[11px] font-mono font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
               <input
@@ -117,12 +117,12 @@ export const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@fundsroom.com"
-                className="w-full px-3.5 py-2.5 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-mono-900 dark:text-white placeholder-mono-400 dark:placeholder-mono-600 focus:outline-none focus:border-mono-900 dark:focus:border-white transition text-xs sm:text-sm font-sans"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-apple-blue dark:focus:border-apple-blue focus:ring-1 focus:ring-apple-blue transition text-xs sm:text-sm font-sans"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono font-extrabold text-mono-600 dark:text-mono-400 uppercase tracking-wider mb-1.5">
+              <label className="block text-[11px] font-mono font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                 Password
               </label>
               <input
@@ -131,14 +131,14 @@ export const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-mono-900 dark:text-white placeholder-mono-400 dark:placeholder-mono-600 focus:outline-none focus:border-mono-900 dark:focus:border-white transition text-xs sm:text-sm font-sans"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-apple-blue dark:focus:border-apple-blue focus:ring-1 focus:ring-apple-blue transition text-xs sm:text-sm font-sans"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 px-4 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black font-extrabold rounded-xl shadow-sm transition-all transform hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 text-xs sm:text-sm"
+              className="w-full mt-2 py-3 px-4 bg-apple-blue hover:bg-apple-blueHover text-white font-extrabold rounded-xl shadow-md shadow-apple-blue/20 transition-all transform hover:translate-y-[-1px] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 text-xs sm:text-sm"
             >
               {loading ? 'Authenticating...' : 'Sign In'}
               <ArrowRight className="w-4 h-4" />
@@ -146,8 +146,8 @@ export const Login: React.FC = () => {
           </form>
 
           {/* Secondary Demo Role Access Section */}
-          <div className="mt-8 pt-6 border-t border-mono-200 dark:border-mono-800">
-            <p className="text-[10px] font-mono font-extrabold text-mono-400 dark:text-mono-500 uppercase tracking-widest mb-3 flex items-center justify-between">
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+            <p className="text-[10px] font-mono font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 flex items-center justify-between">
               <span>Demo Role Testing Presets</span>
               <span>1-Click Access</span>
             </p>
@@ -158,12 +158,12 @@ export const Login: React.FC = () => {
                   key={item.role}
                   type="button"
                   onClick={() => handleDemoLogin(item.role)}
-                  className="px-3 py-2 rounded-lg border border-mono-200 dark:border-mono-800 bg-mono-50 dark:bg-mono-950 hover:bg-mono-100 dark:hover:bg-mono-900 text-left transition flex items-center justify-between group"
+                  className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-900 text-left transition flex items-center justify-between group"
                 >
-                  <span className="font-semibold text-xs text-mono-700 dark:text-mono-300 group-hover:text-mono-900 dark:group-hover:text-white">
+                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-300 group-hover:text-apple-blue">
                     {item.label}
                   </span>
-                  <span className="text-[9px] font-mono font-bold px-1 py-0.5 rounded bg-mono-200 dark:bg-mono-800 text-mono-600 dark:text-mono-400">
+                  <span className="text-[9px] font-mono font-bold px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                     {item.role}
                   </span>
                 </button>

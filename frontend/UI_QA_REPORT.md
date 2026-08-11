@@ -1,17 +1,14 @@
-# Premium Monochrome UI Rebuild — QA & Verification Report 🖤
+# Premium Operations UI Rebuild — QA & Verification Report 🎨
 
-This QA report documents the complete visual rebuild of the **Fundsroom Mini ERP + CRM Operations Portal** into an Apple-inspired, **100% Monochrome (Black, White, Gray)** enterprise interface.
+This document records the visual rebuild of the **Fundsroom Mini ERP + CRM Operations Portal** blending Apple-inspired visual restraint, progressive scroll disclosure, and generous whitespace with a **Restrained Apple Blue (`#0071E3`) Accent (10-15%)** and an **85-90% Neutral Palette**.
 
 ---
 
-## 📋 1. Design & Color System Architecture
+## 🎨 1. Design & Color System Architecture
 
-- **Design Philosophy**: Apple product interface principles — visual restraint, generous whitespace, confident typography, smooth progressive disclosure, and quiet simplicity.
-- **Allowed Palette**:
-  - **Black**: `#000000`, `#050505`, `#0A0A0A`, `#111111`, `#181818`, `#222222`
-  - **White**: `#FFFFFF`, `#FAFAFA`, `#F5F5F5`
-  - **Gray**: `#333333`, `#555555`, `#777777`, `#999999`, `#CCCCCC`, `#E5E5E5`
-- **Color Removal Audit**: Decorative blue, cyan, green, yellow, red, and purple classes were completely removed across all 7 views and shell components. Search for `ocean`, `emerald`, `rose`, `amber`, `indigo` returned **0 matches**.
+- **Primary Base Palette (85–90%)**: Slate black (`#050505`), charcoal (`#0B0B0B`), white (`#FFFFFF`), off-white (`#F5F5F5`), grays (`#242424`, `#666666`, `#E5E5E5`).
+- **Restrained Accent (10–15%)**: Apple Blue (`#0071E3`) reserved strictly for primary action CTAs, active links, active navigation indicator dot/line, and input focus states.
+- **Removed Decorative Colors**: Purple, violet, cyan, green, emerald, yellow, amber, orange, red, and pink classes were completely removed across all 7 views and shell components.
 
 ---
 
@@ -19,25 +16,25 @@ This QA report documents the complete visual rebuild of the **Fundsroom Mini ERP
 
 | Component / Page | Visual Rebuild & Implementation Details |
 | :--- | :--- |
-| **`Login.tsx`** | Full-screen monochrome canvas (`.bg-mono-canvas`), `FUNDSROOM ERP + CRM OPERATIONS` identifier, `Welcome back` heading, floating slate input containers, inverted Sign In button (`hover:scale-[1.01] active:scale-[0.98]`), and secondary demo role selector. Max 0.5–1 degree pointer tilt. |
-| **`Dashboard.tsx`** | Operations Workspace header with inverted CTA button (`+ New Delivery Order`), **Quiet Horizontal Metrics Row** (Total Customers, Master Products, Low Stock Warnings, Confirmed Sales) with 3XL numbers and hairline dividers—NO colors or colored icons, Sales Activity Table, and Inventory Intelligence callout list. |
-| **`Sidebar.tsx`** | Black & white surface, compact navigation links, active menu item highlighted by solid inverted contrast (`bg-mono-900 text-white dark:bg-white dark:text-black font-bold`) and a solid monochrome left indicator line. |
-| **`Navbar.tsx`** | Quiet workspace header with monochrome breadcrumb context, active user session pill, and Theme Switcher controls (`System`, `Light`, `Dark`). |
-| **`Badge.tsx`** | **Monochrome Status System**: `CONFIRMED`/`ACTIVE` (Solid black/white inverted pill), `DRAFT`/`PENDING` (Light gray outlined pill), `CANCELLED`/`INACTIVE` (Dark outlined pill with strikethrough), `LOW STOCK` (Monochrome warning icon + bold text). |
-| **`Customers.tsx`** | Business data directory workspace, sticky table header, buyer classification pills (`RETAILER`, `WHOLESALER`, `DISTRIBUTOR`), and slide-over **Follow-up Timeline** drawer. |
-| **`Inventory.tsx`** | High-density SKU master table, low-stock alert highlights, Stock IN/OUT adjustment modal with distinct operation buttons, and movement audit log drawer. |
-| **`SalesChallans.tsx`** | Segmented filter controls (`ALL`, `DRAFT`, `CONFIRMED`, `CANCELLED`) and delivery order directory. |
-| **`CreateChallan.tsx`** | Step-by-step guided Challan Builder (`1 CUSTOMER → 2 PRODUCTS → 3 QUANTITY → 4 STOCK CHECK → 5 TOTAL → 6 CONFIRM`) with live inventory availability guardrails. |
-| **`ChallanDetail.tsx`** | Printable delivery note document, GST metadata header, itemized pricing snapshots, and `@media print` clean B&W print layout. |
+| **`Login.tsx`** | Full-screen abstract environment canvas (`.bg-abstract-canvas`), `FUNDSROOM ERP + CRM OPERATIONS` identifier, `Welcome back` heading, floating input containers with `#0071E3` focus border, primary Apple Blue Sign In button (`hover:translate-y-[-1px] active:scale-[0.98]`), and secondary demo role selector. Max 0.5–1 degree pointer tilt. |
+| **`Dashboard.tsx`** | Operations Overview hero header with title + Solid Apple Blue CTA button (`+ New Delivery Order`), **Quiet Horizontal Metric Strip** (Total Customers, Master Products, Low Stock Warnings, Confirmed Sales) with 3XL numbers and hairline dividers—NO colored cards, Sales Orders Activity Table, and Inventory Intelligence callout list. |
+| **`Sidebar.tsx`** | Neutral slate surface, compact navigation links, active menu item highlighted by solid contrast (`bg-slate-900 text-white dark:bg-white dark:text-black font-bold`) and a small `#0071E3` blue left indicator line. |
+| **`Navbar.tsx`** | Workspace header with monochrome breadcrumb context, active user session pill, and Theme Switcher controls (`System`, `Light`, `Dark`). |
+| **`Badge.tsx`** | **Neutral Operational Status System**: `CONFIRMED`/`ACTIVE` (Solid black/white inverted pill), `DRAFT`/`PENDING` (Light gray outlined pill), `CANCELLED`/`INACTIVE` (Dark outlined pill with strikethrough), `LOW STOCK` (Neutral warning icon + bold mono text). |
+| **`Customers.tsx`** | Business data directory workspace, sticky table header, buyer classification pills (`RETAILER`, `WHOLESALER`, `DISTRIBUTOR`), Apple Blue primary CTA, and slide-over **Follow-up Timeline** drawer. |
+| **`Inventory.tsx`** | High-density SKU master table, low-stock alert highlights, Stock IN/OUT adjustment modal with distinct operation buttons (Solid Apple Blue button for Stock IN, outlined button for Stock OUT), and movement audit log drawer. |
+| **`SalesChallans.tsx`** | Segmented filter controls (`ALL`, `DRAFT`, `CONFIRMED`, `CANCELLED`), Apple Blue primary CTA, and delivery order directory table. |
+| **`CreateChallan.tsx`** | Step-by-step guided Challan Builder (`01 CUSTOMER → 02 PRODUCTS → 03 QUANTITY → 04 STOCK CHECK → 05 TOTAL → 06 CONFIRM`), dynamic line item management, and Apple Blue Save & Confirm button. |
+| **`ChallanDetail.tsx`** | Printable delivery note document, GST metadata header, itemized pricing snapshots, Apple Blue Confirm Dispatch CTA, and `@media print` clean B&W print layout. |
 
 ---
 
 ## 🎬 3. Motion & Animation System
 
-- **Entrance Motion**: Keyframe fade-up (`.animate-fade-up`) opacity 0 -> 1, translateY 12px -> 0 over 500–650ms (`cubic-bezier(0.16, 1, 0.3, 1)`).
-- **Desktop Pointer Tilt**: Max 0.5–1 degree pointer-based subtle perspective response (`.tilt-mono-card`).
+- **Entrance Motion**: Keyframe fade-up (`.animate-fade-up`) opacity 0 -> 1, translateY 18px -> 0 over 500–700ms (`cubic-bezier(0.16, 1, 0.3, 1)`).
+- **Desktop Pointer Tilt**: Max 0.5–1 degree pointer-based subtle perspective response (`.tilt-card-subtle`).
 - **Reduced Motion**: Disables all scroll reveals, card tilts, and transitions under `@media (prefers-reduced-motion: reduce)`.
-- **Zero Heavy 3D Libraries**: No Three.js, GSAP, WebGL, or particle frameworks used.
+- **Zero Heavy 3D Frameworks**: No Three.js, GSAP, WebGL, or particle libraries used.
 
 ---
 
@@ -45,7 +42,7 @@ This QA report documents the complete visual rebuild of the **Fundsroom Mini ERP
 
 - **Viewports Tested**: `1920x1080` (Desktop), `1440x900` (Laptop), `1366x768` (Standard laptop), `768x1024` (Tablet), `375x812` (Mobile).
 - **Mobile Drawer**: Collapsible mobile sidebar overlay with backdrop blur.
-- **Accessibility**: High contrast grayscale typography, keyboard navigation focus indicators, and semantic HTML elements.
+- **Accessibility**: High contrast typography, keyboard navigation focus rings (`ring-apple-blue`), and semantic HTML elements.
 
 ---
 
@@ -55,10 +52,10 @@ This QA report documents the complete visual rebuild of the **Fundsroom Mini ERP
    ```text
    vite v5.4.21 building for production...
    ✓ 1551 modules transformed.
-   dist/index.html                   0.82 kB │ gzip:  0.47 kB
-   dist/assets/index-BdoTrSBO.css   26.98 kB │ gzip:  5.41 kB
-   dist/assets/index-tGazpPHE.js   309.14 kB │ gzip: 88.91 kB
-   ✓ built in 3.83s
+   dist/index.html                   0.82 kB │ gzip:  0.48 kB
+   dist/assets/index-C8qSFASk.css   27.63 kB │ gzip:  5.62 kB
+   dist/assets/index-BTxSAjVZ.js   312.05 kB │ gzip: 89.47 kB
+   ✓ built in 4.69s
    ```
    - **Result**: `0 TypeScript Errors`, `0 Vite Build Errors`, `0 PostCSS Errors`, `0 Tailwind Errors`.
 
@@ -72,10 +69,28 @@ This QA report documents the complete visual rebuild of the **Fundsroom Mini ERP
 
 ---
 
-## 🏁 6. Final Acceptance Status
+## 🏁 6. Final Acceptance Checklist
 
-- **Backend Touched**: `NO`
-- **API Contracts Modified**: `NO`
-- **Remaining Color Accents**: `0`
-- **Console / Build Errors**: `0`
-- **Overall Rebuild Status**: **`PASS (100% Monochrome Enterprise Product)`**
+- [x] Backend untouched
+- [x] API contracts untouched
+- [x] Authentication works
+- [x] RBAC works
+- [x] Login works
+- [x] Dashboard works
+- [x] Customers works
+- [x] Inventory works
+- [x] Challans work
+- [x] Print works
+- [x] Light mode works
+- [x] Dark mode works
+- [x] System theme works
+- [x] Restrained Apple Blue accent (`#0071E3`) used for primary CTAs/links/focus states
+- [x] 85–90% neutral base palette
+- [x] No red/green/yellow traffic light badges
+- [x] Scroll reveal & reduced motion support
+- [x] Responsive mobile drawer
+- [x] 0 invalid Tailwind classes
+- [x] 0 PostCSS/Vite errors
+- [x] 0 TypeScript errors
+- [x] `npm run build` succeeds in 4.69s
+- [x] `frontend/UI_QA_REPORT.md` created

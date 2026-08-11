@@ -21,46 +21,36 @@
 
 /* Direct CSS Text Selection Rules */
 ::selection {
-  background: #111111;
+  background: #0071E3;
   color: #ffffff;
 }
 
 ::-moz-selection {
-  background: #111111;
+  background: #0071E3;
   color: #ffffff;
 }
 
-.dark ::selection {
-  background: #ffffff;
-  color: #000000;
-}
-
-.dark ::-moz-selection {
-  background: #ffffff;
-  color: #000000;
-}
-
-/* Monochrome Subtle Canvas Background */
-.bg-mono-canvas {
+/* Abstract Ambient Canvas Background */
+.bg-abstract-canvas {
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, rgba(5, 5, 5, 0) 70%),
-    linear-gradient(to bottom, rgba(13, 13, 13, 0.8), rgba(5, 5, 5, 1));
+    radial-gradient(circle at 50% -10%, rgba(0, 113, 227, 0.08) 0%, rgba(5, 5, 5, 0) 65%),
+    linear-gradient(to bottom, rgba(11, 11, 11, 0.8), rgba(5, 5, 5, 1));
 }
 
-.light .bg-mono-canvas {
+.light .bg-abstract-canvas {
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(0, 0, 0, 0.03) 0%, rgba(245, 245, 245, 0) 70%),
+    radial-gradient(circle at 50% -10%, rgba(0, 113, 227, 0.06) 0%, rgba(245, 245, 245, 0) 65%),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(245, 245, 245, 1));
 }
 
 /* Subtle Pointer Tilt (Max 0.5 - 1 Degree) */
 @media (hover: hover) and (pointer: fine) {
-  .tilt-mono-card {
+  .tilt-card-subtle {
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
     will-change: transform;
   }
 
-  .tilt-mono-card:hover {
+  .tilt-card-subtle:hover {
     transform: perspective(1000px) rotateX(0.5deg) rotateY(-0.5deg) translate3d(0, -2px, 0);
   }
 }
@@ -69,7 +59,7 @@
 @keyframes sectionFadeUp {
   from {
     opacity: 0;
-    transform: translate3d(0, 12px, 0);
+    transform: translate3d(0, 18px, 0);
   }
   to {
     opacity: 1;
@@ -78,11 +68,11 @@
 }
 
 .animate-fade-up {
-  animation: sectionFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: sectionFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-section-reveal {
-  animation: sectionFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: sectionFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Reduced Motion Override */
@@ -93,7 +83,7 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .tilt-mono-card:hover {
+  .tilt-card-subtle:hover {
     transform: none !important;
   }
   .animate-fade-up, .animate-section-reveal {
@@ -103,7 +93,7 @@
   }
 }
 
-/* Custom Monochrome Scrollbars */
+/* Custom Minimalist Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -119,7 +109,7 @@
   border-radius: 4px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background-color: #222222;
+  background-color: #242424;
 }
 ::-webkit-scrollbar-thumb:hover {
   background-color: #999999;

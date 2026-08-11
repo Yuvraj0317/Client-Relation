@@ -16,31 +16,31 @@ export const Badge: React.FC<BadgeProps> = ({ status, size = 'md' }) => {
       case 'COMPLETED':
       case 'IN STOCK':
         return {
-          bg: 'bg-mono-900 text-white dark:bg-white dark:text-black font-extrabold border border-mono-800 dark:border-mono-200',
+          bg: 'bg-slate-900 text-white dark:bg-white dark:text-black font-extrabold border border-slate-800 dark:border-slate-200',
           icon: CheckCircle2,
         };
       case 'DRAFT':
       case 'PENDING':
       case 'LEAD':
         return {
-          bg: 'bg-mono-100 text-mono-700 border border-mono-300 dark:bg-mono-900 dark:text-mono-300 dark:border-mono-800 font-semibold',
+          bg: 'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 font-semibold',
           icon: Clock,
         };
       case 'CANCELLED':
       case 'INACTIVE':
         return {
-          bg: 'bg-mono-200 text-mono-900 border border-mono-400 dark:bg-mono-950 dark:text-mono-400 dark:border-mono-800 font-medium line-through decoration-mono-400',
+          bg: 'bg-slate-200 text-slate-900 border border-slate-400 dark:bg-slate-950 dark:text-slate-400 dark:border-slate-800 font-medium line-through decoration-slate-400',
           icon: XCircle,
         };
       case 'LOW STOCK':
       case 'WARNING':
         return {
-          bg: 'bg-mono-100 text-mono-900 border border-mono-400 dark:bg-mono-900 dark:text-white dark:border-mono-700 font-extrabold',
+          bg: 'bg-slate-100 text-slate-900 border border-slate-400 dark:bg-slate-900 dark:text-white dark:border-slate-700 font-extrabold',
           icon: AlertTriangle,
         };
       default:
         return {
-          bg: 'bg-mono-100 text-mono-800 border border-mono-300 dark:bg-mono-900 dark:text-mono-200 dark:border-mono-800 font-medium',
+          bg: 'bg-slate-100 text-slate-800 border border-slate-300 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-800 font-medium',
           icon: Clock,
         };
     }

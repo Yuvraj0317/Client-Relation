@@ -10,6 +10,8 @@ import {
   ArrowLeft,
   CheckCircle2,
   XCircle,
+  Building,
+  Calendar,
   Layers,
 } from 'lucide-react';
 
@@ -23,8 +25,7 @@ export const ChallanDetail: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchChallan = async () => {
-    if (!id) return;
+  const fetchChallanDetail = async () => {
     setLoading(true);
     try {
       const res: any = await api.get(`/sales-challans/${id}`);
@@ -32,24 +33,26 @@ export const ChallanDetail: React.FC = () => {
         setChallan(res.data);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load delivery challan details');
+      setError(err.message || 'Failed to load delivery challan document');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchChallan();
+    if (id) fetchChallanDetail();
   }, [id]);
 
-  const handleConfirm = async () => {
-    if (!id) return;
+  const handleConfirmChallan = async () => {
+    if (!id || !challan) return;
+    if (!window.confirm(`Are you sure you want to CONFIRM dispatch for Challan #${challan.challanNumber}? This will deduct inventory balance.`)) return;
+
     setActionLoading(true);
     setError(null);
     try {
       const res: any = await api.post(`/sales-challans/${id}/confirm`);
       if (res.success) {
-        fetchChallan();
+        fetchChallanDetail();
       }
     } catch (err: any) {
       setError(err.message || 'Failed to confirm delivery dispatch');
@@ -58,20 +61,19 @@ export const ChallanDetail: React.FC = () => {
     }
   };
 
-  const handleCancel = async () => {
-    if (!id) return;
-    if (!window.confirm('Are you sure you want to cancel this delivery order? Stock will be restored if previously confirmed.')) {
-      return;
-    }
+  const handleCancelChallan = async () => {
+    if (!id || !challan) return;
+    if (!window.confirm(`Are you sure you want to CANCEL Challan #${challan.challanNumber}?`)) return;
+
     setActionLoading(true);
     setError(null);
     try {
       const res: any = await api.post(`/sales-challans/${id}/cancel`);
       if (res.success) {
-        fetchChallan();
+        fetchChallanDetail();
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to cancel delivery order');
+      setError(err.message || 'Failed to cancel delivery challan');
     } finally {
       setActionLoading(false);
     }
@@ -83,28 +85,31 @@ export const ChallanDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-mono-100 dark:bg-surface-dark text-mono-900 dark:text-white font-sans items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="inline-block w-8 h-8 border-2 border-mono-900 dark:border-white border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs font-mono text-mono-500">Loading delivery document...</p>
+      <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-white">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Navbar title="Delivery Document" />
+          <main className="p-8 text-center text-xs font-mono text-slate-500">
+            Loading delivery note document...
+          </main>
         </div>
       </div>
     );
   }
 
-  if (error || !challan) {
+  if (!challan) {
     return (
-      <div className="flex min-h-screen bg-mono-100 dark:bg-surface-dark text-mono-900 dark:text-white font-sans">
-        <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
-        <div className="flex-1 flex flex-col min-w-0">
-          <Navbar title="Delivery Document Error" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
-          <main className="p-8 text-center space-y-4">
-            <p className="text-sm text-mono-600 dark:text-mono-400">{error || 'Challan document not found'}</p>
+      <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-white">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Navbar title="Delivery Document" />
+          <main className="p-8 text-center text-xs font-mono text-slate-500 space-y-4">
+            <p>{error || 'Challan record not found.'}</p>
             <button
               onClick={() => navigate('/sales-challans')}
-              className="px-4 py-2 bg-mono-900 text-white font-mono text-xs font-bold rounded-xl"
+              className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl"
             >
-              Back to Sales Dispatches
+              Back to Dispatches
             </button>
           </main>
         </div>
@@ -113,170 +118,177 @@ export const ChallanDetail: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-mono-100 dark:bg-surface-dark text-mono-900 dark:text-white font-sans transition-colors duration-200">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-white font-sans transition-colors duration-200">
       <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar title={`Challan: ${challan.challanNumber}`} onMobileMenuToggle={() => setMobileMenuOpen(true)} />
+        <Navbar title={`Challan #${challan.challanNumber}`} onMobileMenuToggle={() => setMobileMenuOpen(true)} />
 
         <main className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1 max-w-4xl mx-auto w-full">
           {/* Action Toolbar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print animate-fade-up">
             <button
               onClick={() => navigate('/sales-challans')}
-              className="px-3 py-1.5 text-xs font-mono font-bold text-mono-600 dark:text-mono-400 hover:text-mono-900 dark:hover:text-white transition flex items-center gap-1 border border-mono-200 dark:border-mono-800 rounded-xl bg-white dark:bg-mono-950 self-start"
+              className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to Dispatches
+              <ArrowLeft className="w-4 h-4" /> Back to Dispatches
             </button>
 
-            <div className="flex items-center gap-3">
-              {challan.status === 'DRAFT' && (
-                <button
-                  onClick={handleConfirm}
-                  disabled={actionLoading}
-                  className="px-4 py-2 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black text-xs font-extrabold rounded-xl shadow-sm transition flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> Confirm Dispatch
-                </button>
-              )}
-
-              {challan.status !== 'CANCELLED' && (
-                <button
-                  onClick={handleCancel}
-                  disabled={actionLoading}
-                  className="px-3.5 py-2 border border-mono-300 dark:border-mono-700 bg-mono-100 dark:bg-mono-900 hover:bg-mono-200 dark:hover:bg-mono-800 text-mono-900 dark:text-white text-xs font-mono font-bold rounded-xl transition flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  <XCircle className="w-4 h-4" /> Cancel Order
-                </button>
-              )}
-
+            <div className="flex items-center gap-2">
               <button
                 onClick={handlePrint}
-                className="px-4 py-2 bg-mono-900 text-white dark:bg-white dark:text-black text-xs font-extrabold rounded-xl shadow-sm transition flex items-center gap-1.5"
+                className="px-3.5 py-2 bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-mono font-bold rounded-xl shadow-sm hover:opacity-90 transition flex items-center gap-1.5"
               >
-                <Printer className="w-4 h-4" /> Print Document
+                <Printer className="w-4 h-4" /> Print Delivery Note
               </button>
+
+              {challan.status === 'DRAFT' && (
+                <>
+                  <button
+                    disabled={actionLoading}
+                    onClick={handleConfirmChallan}
+                    className="px-3.5 py-2 bg-apple-blue hover:bg-apple-blueHover text-white text-xs font-extrabold rounded-xl shadow-md shadow-apple-blue/20 transition flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Confirm Dispatch
+                  </button>
+                  <button
+                    disabled={actionLoading}
+                    onClick={handleCancelChallan}
+                    className="px-3.5 py-2 border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-900 dark:text-white text-xs font-mono font-bold rounded-xl transition flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <XCircle className="w-4 h-4" /> Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Printable Enterprise Delivery Note Surface */}
-          <div className="print-area print-card bg-white dark:bg-surface-cardDark border border-mono-200 dark:border-surface-borderDark rounded-2xl p-6 sm:p-10 shadow-lg space-y-8 animate-fade-up">
-            {/* Header Identity */}
-            <div className="flex flex-col sm:flex-row items-start justify-between gap-6 pb-6 border-b border-mono-200 dark:border-mono-800">
+          {error && (
+            <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-semibold no-print">
+              {error}
+            </div>
+          )}
+
+          {/* Printable Delivery Document Canvas */}
+          <div className="print-area print-card bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark rounded-2xl p-6 sm:p-10 shadow-lg space-y-8 animate-fade-up">
+            {/* Header Document Metadata */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded bg-mono-900 dark:bg-white text-white dark:text-black flex items-center justify-center font-bold">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <span className="font-extrabold text-base tracking-tight text-mono-900 dark:text-white">
-                    FUNDSROOM ERP LOGISTICS
-                  </span>
+                  <Layers className="w-6 h-6 text-apple-blue" />
+                  <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">FUNDSROOM</span>
                 </div>
-                <p className="text-xs text-mono-500 font-mono">Official Sales Delivery Note</p>
+                <p className="text-xs text-slate-500 font-mono">DELIVERY CHALLAN & DISPATCH NOTE</p>
+                <p className="text-[10px] text-slate-400 font-mono">Original for Consignee / Transport Copy</p>
               </div>
 
-              <div className="text-left sm:text-right space-y-1">
-                <span className="font-mono text-xl font-extrabold text-mono-900 dark:text-white block">
-                  {challan.challanNumber}
+              <div className="text-left sm:text-right space-y-1 font-mono">
+                <div className="inline-block mb-1">
+                  <Badge status={challan.status} />
+                </div>
+                <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">{challan.challanNumber}</h2>
+                <p className="text-xs text-slate-500 flex items-center sm:justify-end gap-1">
+                  <Calendar className="w-3.5 h-3.5" /> Date: {new Date(challan.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Consignee / Customer Metadata Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-xs">
+              <div className="space-y-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">
+                  CONSIGNEE / DELIVER TO:
                 </span>
-                <div className="flex items-center sm:justify-end gap-2">
-                  <Badge status={challan.status} size="sm" />
-                </div>
-                <p className="text-xs font-mono text-mono-500 pt-1">
-                  Issued Date: {new Date(challan.createdAt).toLocaleDateString()}
+                <p className="font-extrabold text-slate-900 dark:text-white text-sm">
+                  {challan.customer?.name}
                 </p>
+                <p className="text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                  <Building className="w-3 h-3 text-slate-400" /> {challan.customer?.businessName || challan.customer?.companyName || 'Individual Buyer'}
+                </p>
+                <p className="text-slate-500">GSTIN: {challan.customer?.gstNumber || 'Unregistered'}</p>
+                <p className="text-slate-500">Phone: {challan.customer?.mobile || challan.customer?.phone}</p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">
+                  DISPATCH DETAILS:
+                </span>
+                <p className="text-slate-600 dark:text-slate-400">Address: {challan.customer?.address || 'N/A'}</p>
+                <p className="text-slate-500">Dispatch Status: <span className="font-extrabold text-slate-900 dark:text-white">{challan.status}</span></p>
+                <p className="text-slate-500">Remarks: {challan.notes || 'Routine sales dispatch'}</p>
               </div>
             </div>
 
-            {/* Customer & Shipping Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl">
-              <div>
-                <h3 className="text-[10px] font-mono font-extrabold text-mono-500 uppercase tracking-widest mb-1.5">
-                  DELIVERY RECIPIENT
-                </h3>
-                <p className="font-extrabold text-sm text-mono-900 dark:text-white">{challan.customer?.name}</p>
-                <p className="text-xs font-mono text-mono-600 dark:text-mono-400">
-                  {challan.customer?.businessName || challan.customer?.companyName || 'Individual Buyer'}
-                </p>
-                <p className="text-xs text-mono-500 mt-1">Mobile: {challan.customer?.mobile || challan.customer?.phone}</p>
-                <p className="text-xs text-mono-500">Email: {challan.customer?.email}</p>
-              </div>
-
-              <div>
-                <h3 className="text-[10px] font-mono font-extrabold text-mono-500 uppercase tracking-widest mb-1.5">
-                  GST & DISPATCH METADATA
-                </h3>
-                <p className="text-xs font-mono text-mono-800 dark:text-mono-200">
-                  GSTIN: {challan.customer?.gstNumber || 'NOT PROVIDED'}
-                </p>
-                <p className="text-xs font-mono text-mono-800 dark:text-mono-200">
-                  Address: {challan.customer?.address || 'N/A'}
-                </p>
-                <p className="text-xs text-mono-500 mt-1">
-                  Transport Notes: {challan.notes || 'None'}
-                </p>
-              </div>
-            </div>
-
-            {/* Snapshot Line Items Table */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-mono font-extrabold text-mono-500 uppercase tracking-wider">
-                ITEMIZED DELIVERED PRODUCTS
-              </h3>
-              <div className="overflow-x-auto border border-mono-200 dark:border-mono-800 rounded-xl">
-                <table className="w-full text-left text-xs font-sans border-collapse">
-                  <thead>
-                    <tr className="bg-mono-100 dark:bg-mono-950 border-b border-mono-200 dark:border-mono-800 text-mono-600 dark:text-mono-400 font-mono uppercase text-[10px]">
-                      <th className="p-3">ITEM DESCRIPTION</th>
-                      <th className="p-3 font-mono">SKU</th>
-                      <th className="p-3 font-mono text-right">UNIT PRICE</th>
-                      <th className="p-3 font-mono text-right">QUANTITY</th>
-                      <th className="p-3 font-mono text-right">AMOUNT</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-mono-100 dark:divide-mono-900">
-                    {challan.items?.map((item) => (
-                      <tr key={item.id}>
-                        <td className="p-3 font-semibold text-mono-900 dark:text-white">
+            {/* Itemized Line Items Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-slate-100 dark:bg-slate-950 text-slate-500 font-mono uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="p-3">#</th>
+                    <th className="p-3">PRODUCT / SKU</th>
+                    <th className="p-3 text-center">QUANTITY</th>
+                    <th className="p-3 text-right">UNIT PRICE</th>
+                    <th className="p-3 text-right">AMOUNT</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-900 font-mono">
+                  {challan.items?.map((item, idx) => (
+                    <tr key={item.id || idx}>
+                      <td className="p-3 text-slate-400">{idx + 1}</td>
+                      <td className="p-3 font-sans">
+                        <p className="font-bold text-slate-900 dark:text-white">
                           {item.productName || item.product?.name || 'Product'}
-                        </td>
-                        <td className="p-3 font-mono text-xs text-mono-500">
-                          {item.productSku || item.product?.sku || 'N/A'}
-                        </td>
-                        <td className="p-3 font-mono text-right">
-                          ₹{Number(item.unitPriceSnapshot || item.product?.unitPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="p-3 font-mono font-bold text-right">{item.quantity}</td>
-                        <td className="p-3 font-mono font-extrabold text-right text-mono-900 dark:text-white">
-                          ₹{Number(item.lineTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </p>
+                        <p className="text-[10px] font-mono text-slate-400">
+                          SKU: {item.productSku || item.product?.sku || 'N/A'}
+                        </p>
+                      </td>
+                      <td className="p-3 text-center font-extrabold text-slate-900 dark:text-white">
+                        {item.quantity} Units
+                      </td>
+                      <td className="p-3 text-right text-slate-700 dark:text-slate-300">
+                        ₹{Number(item.unitPriceSnapshot || item.product?.unitPrice || 0).toFixed(2)}
+                      </td>
+                      <td className="p-3 text-right font-extrabold text-slate-900 dark:text-white">
+                        ₹{Number(item.lineTotal || item.quantity * Number(item.unitPriceSnapshot || 0)).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            {/* Total Value Bar */}
-            <div className="flex justify-end pt-4 border-t border-mono-200 dark:border-mono-800">
-              <div className="text-right">
-                <span className="text-[10px] font-mono font-extrabold text-mono-500 uppercase tracking-widest block">
-                  GRAND TOTAL VALUE
-                </span>
-                <span className="text-3xl font-extrabold font-mono text-mono-900 dark:text-white">
-                  ₹{Number(challan.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-            </div>
+            {/* Document Totals & Signatures */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 font-mono">
+              <div className="text-xs text-slate-500 space-y-8">
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Terms & Conditions:</p>
+                  <p className="text-[10px]">1. Goods once dispatched cannot be returned without authorization.</p>
+                  <p className="text-[10px]">2. Discrepancies must be notified within 24 hours of receipt.</p>
+                </div>
 
-            {/* Signature Blocks for Print */}
-            <div className="pt-12 grid grid-cols-2 gap-8 border-t border-mono-200 dark:border-mono-800 text-center font-mono text-xs">
-              <div>
-                <div className="border-b border-mono-300 dark:border-mono-700 mb-2 h-12" />
-                <span className="text-mono-500">Authorized Signatory</span>
+                <div className="pt-6 border-t border-slate-200 dark:border-slate-800 w-48 text-center">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Receiver Signature</p>
+                </div>
               </div>
-              <div>
-                <div className="border-b border-mono-300 dark:border-mono-700 mb-2 h-12" />
-                <span className="text-mono-500">Customer Receiver Signature</span>
+
+              <div className="w-full sm:w-64 space-y-2">
+                <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>Total Quantity:</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">
+                      {challan.items?.reduce((acc, curr) => acc + curr.quantity, 0)} Units
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-base font-extrabold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <span>Grand Total:</span>
+                    <span>₹{Number(challan.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-200 dark:border-slate-800 text-center">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Authorized Signatory</p>
+                  <p className="text-[10px] font-bold text-slate-900 dark:text-white">Fundsroom ERP Operations</p>
+                </div>
               </div>
             </div>
           </div>
