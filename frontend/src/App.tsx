@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Customers } from './pages/Customers';
@@ -19,7 +20,7 @@ const ProtectedRoute: React.FC<{
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-ocean-500 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -37,69 +38,71 @@ const ProtectedRoute: React.FC<{
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/customers"
-            element={
-              <ProtectedRoute>
-                <Customers />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/customers"
+              element={
+                <ProtectedRoute>
+                  <Customers />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/inventory"
-            element={
-              <ProtectedRoute>
-                <Inventory />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute>
+                  <Inventory />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/sales-challans"
-            element={
-              <ProtectedRoute>
-                <SalesChallans />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/sales-challans"
+              element={
+                <ProtectedRoute>
+                  <SalesChallans />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/sales-challans/new"
-            element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'SALES']}>
-                <CreateChallan />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/sales-challans/new"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'SALES']}>
+                  <CreateChallan />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/sales-challans/:id"
-            element={
-              <ProtectedRoute>
-                <ChallanDetail />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/sales-challans/:id"
+              element={
+                <ProtectedRoute>
+                  <ChallanDetail />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

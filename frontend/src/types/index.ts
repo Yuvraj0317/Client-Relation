@@ -26,8 +26,11 @@ export interface Customer {
   id: string;
   name: string;
   companyName?: string;
+  businessName?: string;
   email?: string;
   phone: string;
+  mobile?: string;
+  gstNumber?: string;
   address: string;
   customerType: CustomerType;
   status: CustomerStatus;

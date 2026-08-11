@@ -6,12 +6,13 @@ import { DataTable } from '../components/common/DataTable';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { SalesChallan, ChallanStatus } from '../types';
-import { FileText, Plus, Search, Filter, Calendar } from 'lucide-react';
+import { SalesChallan } from '../types';
+import { Plus, Search } from 'lucide-react';
 
 export const SalesChallans: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [challans, setChallans] = useState<SalesChallan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,30 +48,30 @@ export const SalesChallans: React.FC = () => {
     {
       header: 'Challan #',
       cell: (c: SalesChallan) => (
-        <span className="font-mono font-bold text-blue-400">{c.challanNumber}</span>
+        <span className="font-mono font-bold text-ocean-600 dark:text-ocean-400">{c.challanNumber}</span>
       ),
     },
     {
       header: 'Customer',
       cell: (c: SalesChallan) => (
         <div>
-          <p className="font-semibold text-slate-100">{c.customer?.name || 'N/A'}</p>
-          <p className="text-xs text-slate-400">{c.customer?.companyName || ''}</p>
+          <p className="font-semibold text-slate-900 dark:text-slate-100">{c.customer?.name || 'N/A'}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{c.customer?.businessName || c.customer?.companyName || ''}</p>
         </div>
       ),
     },
     {
       header: 'Line Items',
       cell: (c: SalesChallan) => (
-        <span className="text-xs font-semibold px-2 py-1 bg-slate-800 rounded-lg text-slate-300">
-          {c._count?.items || 0} Products
+        <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          {c._count?.items || (c.items ? c.items.length : 0)} Items
         </span>
       ),
     },
     {
-      header: 'Total Value',
+      header: 'Total Order Value',
       cell: (c: SalesChallan) => (
-        <span className="font-mono font-semibold text-slate-200">
+        <span className="font-mono font-semibold text-slate-900 dark:text-slate-200">
           ₹{Number(c.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </span>
       ),
@@ -82,9 +83,9 @@ export const SalesChallans: React.FC = () => {
     {
       header: 'Created Info',
       cell: (c: SalesChallan) => (
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-500 dark:text-slate-400">
           <p>By {c.createdBy?.name || 'Sales Agent'}</p>
-          <p className="text-[10px] text-slate-500">
+          <p className="text-[10px] text-slate-400 dark:text-slate-500">
             {new Date(c.createdAt).toLocaleDateString()}
           </p>
         </div>
@@ -93,43 +94,43 @@ export const SalesChallans: React.FC = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <Sidebar />
+    <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+      <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar title="Sales Challan & Dispatch Engine" />
+        <Navbar title="Sales Delivery Dispatches" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
 
-        <main className="p-8 space-y-6 flex-1">
+        <main className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Delivery Challans</h1>
-              <p className="text-slate-400 text-sm">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Delivery Challan Orders</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
                 Generate delivery notes, snapshot line item pricing, and execute stock dispatch
               </p>
             </div>
             {canCreate && (
               <button
                 onClick={() => navigate('/sales-challans/new')}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center gap-2"
+                className="px-4 py-2.5 bg-ocean-600 hover:bg-ocean-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-ocean-600/30 transition flex items-center gap-2"
               >
-                <Plus className="w-4 h-4" /> Create Sales Challan
+                <Plus className="w-4 h-4" /> New Delivery Order
               </button>
             )}
           </div>
 
           {/* Status Tabs & Search Bar */}
-          <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-4 shadow-lg">
+          <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-4 rounded-xl space-y-4 shadow-sm transition-colors duration-200">
             <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Filter Tabs */}
-              <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                 {['ALL', 'DRAFT', 'CONFIRMED', 'CANCELLED'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setStatusTab(tab)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                       statusTab === tab
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                        ? 'bg-ocean-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
                     }`}
                   >
                     {tab === 'ALL' ? 'All Orders' : tab}
@@ -139,13 +140,13 @@ export const SalesChallans: React.FC = () => {
 
               {/* Search Bar */}
               <div className="w-full sm:w-72 relative">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
                   placeholder="Search by challan # or customer..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-ocean-600"
                 />
               </div>
             </div>
@@ -156,7 +157,7 @@ export const SalesChallans: React.FC = () => {
             columns={columns}
             data={challans}
             loading={loading}
-            emptyMessage="No sales challans found. Click 'Create Sales Challan' to issue a delivery note."
+            emptyMessage="No sales challans found. Click 'New Delivery Order' to issue a delivery note."
             onRowClick={(c) => navigate(`/sales-challans/${c.id}`)}
           />
         </main>

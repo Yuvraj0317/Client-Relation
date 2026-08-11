@@ -5,14 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Customer, Product } from '../types';
 import {
-  FileText,
   Plus,
   Trash2,
   AlertTriangle,
   CheckCircle,
   ArrowLeft,
-  DollarSign,
-  Package,
 } from 'lucide-react';
 
 interface SelectedItem {
@@ -23,6 +20,7 @@ interface SelectedItem {
 
 export const CreateChallan: React.FC = () => {
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -131,7 +129,7 @@ export const CreateChallan: React.FC = () => {
 
       // 2. If Confirm Immediately clicked, execute stock deduction transaction
       if (confirmImmediately) {
-        const confirmRes: any = await api.patch(`/sales-challans/${newChallanId}/confirm`);
+        const confirmRes: any = await api.post(`/sales-challans/${newChallanId}/confirm`);
         if (!confirmRes.success) {
           throw new Error(confirmRes.error?.message || 'Failed to confirm delivery dispatch');
         }
@@ -147,98 +145,98 @@ export const CreateChallan: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-slate-950 text-slate-100">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+          <div className="animate-spin w-8 h-8 border-4 border-ocean-600 border-t-transparent rounded-full" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <Sidebar />
+    <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+      <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar title="Sales Challan Builder" />
+        <Navbar title="Sales Challan Builder" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
 
-        <main className="p-8 space-y-6 flex-1 max-w-5xl mx-auto w-full">
+        <main className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1 max-w-5xl mx-auto w-full">
           {/* Header */}
           <div className="flex items-center justify-between">
             <button
               onClick={() => navigate('/sales-challans')}
-              className="text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1.5 transition"
+              className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 transition"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Challans
+              <ArrowLeft className="w-4 h-4" /> Back to Orders Directory
             </button>
-            <h1 className="text-xl font-bold text-white tracking-tight">
-              Create New Sales Delivery Note
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Create Sales Delivery Order
             </h1>
           </div>
 
           {error && (
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm font-medium flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-400 text-xs sm:text-sm font-medium flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Customer Selection Card */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
-            <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-              1. Customer Account & Order Details
+          <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl space-y-4 shadow-sm transition-colors duration-200">
+            <h3 className="text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              1. Customer Account & Dispatch Instructions
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-2">
+                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase mb-2">
                   Select Customer Account *
                 </label>
                 <select
                   value={selectedCustomerId}
                   onChange={(e) => setSelectedCustomerId(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-ocean-600"
                 >
-                  <option value="">-- Choose Customer --</option>
+                  <option value="">-- Choose Customer Account --</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.companyName || 'Individual'}) - {c.phone}
+                      {c.name} ({c.businessName || c.companyName || 'Individual'}) — {c.phone}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-2">
+                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase mb-2">
                   Dispatch Instructions / Remarks
                 </label>
                 <input
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Handle with care, deliver before 5 PM"
-                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-blue-500"
+                  placeholder="e.g. Deliver to Pune MIDC Gate 2"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-ocean-600"
                 />
               </div>
             </div>
           </div>
 
           {/* Line Items Editor Card */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+          <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl space-y-4 shadow-sm transition-colors duration-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-                2. Delivery Line Items
+              <h3 className="text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                2. Delivery Line Items & Pricing Snapshots
               </h3>
               <button
                 type="button"
                 onClick={addItemRow}
-                className="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-ocean-50 text-ocean-700 dark:bg-ocean-950 dark:text-ocean-300 border border-ocean-200 dark:border-ocean-800 hover:bg-ocean-100 text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" /> Add Product Row
               </button>
             </div>
 
-            {/* Line items table */}
+            {/* Line items list */}
             <div className="space-y-3">
               {items.map((item, idx) => {
                 const isOverStock =
@@ -250,19 +248,19 @@ export const CreateChallan: React.FC = () => {
                 return (
                   <div
                     key={idx}
-                    className="p-4 bg-slate-950 border border-slate-800 rounded-xl grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+                    className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
                   >
                     {/* Product Selector */}
                     <div className="md:col-span-5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                      <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase mb-1">
                         Product Item #{idx + 1}
                       </label>
                       <select
                         value={item.productId}
                         onChange={(e) => handleProductChange(idx, e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100"
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-ocean-600"
                       >
-                        <option value="">-- Select SKU Product --</option>
+                        <option value="">-- Select Product SKU --</option>
                         {products.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name} (SKU: {p.sku}) — Stock: {p.currentStock} | ₹{p.unitPrice}
@@ -273,7 +271,7 @@ export const CreateChallan: React.FC = () => {
 
                     {/* Quantity */}
                     <div className="md:col-span-3">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                      <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase mb-1">
                         Quantity
                       </label>
                       <input
@@ -283,14 +281,14 @@ export const CreateChallan: React.FC = () => {
                         onChange={(e) =>
                           handleQuantityChange(idx, parseInt(e.target.value, 10) || 1)
                         }
-                        className={`w-full px-3 py-2 bg-slate-900 border rounded-lg text-xs font-mono font-bold ${
+                        className={`w-full px-3 py-2 bg-white dark:bg-slate-900 border rounded-lg text-xs font-mono font-bold focus:outline-none ${
                           isOverStock
-                            ? 'border-rose-500 text-rose-400'
-                            : 'border-slate-800 text-slate-100'
+                            ? 'border-rose-500 text-rose-600 dark:text-rose-400'
+                            : 'border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100'
                         }`}
                       />
                       {isOverStock && (
-                        <p className="text-[10px] text-rose-400 mt-1 font-semibold">
+                        <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-1 font-semibold">
                           ⚠️ Exceeds stock ({item.product?.currentStock} available)
                         </p>
                       )}
@@ -298,14 +296,14 @@ export const CreateChallan: React.FC = () => {
 
                     {/* Price & Line Total */}
                     <div className="md:col-span-3 text-right">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                      <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase mb-1">
                         Line Total
                       </label>
-                      <span className="font-mono font-bold text-sm text-emerald-400 block">
+                      <span className="font-mono font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 block">
                         ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </span>
                       {item.product && (
-                        <span className="text-[10px] text-slate-500 font-mono">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                           @ ₹{item.product.unitPrice} / unit
                         </span>
                       )}
@@ -317,7 +315,7 @@ export const CreateChallan: React.FC = () => {
                         type="button"
                         onClick={() => removeItemRow(idx)}
                         disabled={items.length === 1}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg transition disabled:opacity-30"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition disabled:opacity-30"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -328,20 +326,20 @@ export const CreateChallan: React.FC = () => {
             </div>
 
             {/* Total Footer */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 {hasStockWarning && (
-                  <p className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4" />
-                    Notice: One or more products exceed current warehouse stock. You can save as Draft, but Confirmation will require restock.
+                    Notice: One or more products exceed stock. You can save as Draft, but Confirmation requires sufficient inventory.
                   </p>
                 )}
               </div>
               <div className="text-right">
-                <span className="text-xs text-slate-400 uppercase font-bold tracking-wider block">
-                  Grand Total
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-extrabold tracking-wider block">
+                  Grand Order Total
                 </span>
-                <span className="text-2xl font-extrabold font-mono text-white">
+                <span className="text-2xl font-extrabold font-mono text-slate-900 dark:text-white">
                   ₹{calculateTotal().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -349,21 +347,21 @@ export const CreateChallan: React.FC = () => {
           </div>
 
           {/* Action Submission Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
             <button
               type="button"
               disabled={submitting}
               onClick={() => handleSubmitChallan(false)}
-              className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-xl transition shadow"
+              className="w-full sm:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold rounded-xl transition shadow-sm"
             >
-              {submitting ? 'Processing...' : 'Save as Draft (No Stock Impact)'}
+              {submitting ? 'Saving...' : 'Save as Draft (No Stock Impact)'}
             </button>
 
             <button
               type="button"
               disabled={submitting || hasStockWarning}
               onClick={() => handleSubmitChallan(true)}
-              className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-emerald-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <CheckCircle className="w-4 h-4" />
               {submitting ? 'Deducting Stock...' : 'Confirm Dispatch & Deduct Stock'}

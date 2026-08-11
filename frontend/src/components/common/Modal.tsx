@@ -27,20 +27,20 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm transition-opacity no-print">
       <div
-        className={`bg-slate-900 border border-slate-800 rounded-xl shadow-2xl w-full ${widthClasses[maxWidth]} overflow-hidden`}
+        className={`bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark rounded-xl shadow-2xl w-full ${widthClasses[maxWidth]} overflow-hidden transform transition-all duration-200`}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
-          <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-surface-borderDark bg-slate-50/50 dark:bg-slate-950/40">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 text-slate-800 dark:text-slate-200 max-h-[85vh] overflow-y-auto">{children}</div>
       </div>
     </div>
   );

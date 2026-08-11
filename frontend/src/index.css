@@ -3,23 +3,102 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    color-scheme: dark light;
+  }
+  
   body {
-    @apply bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white min-h-screen;
+    @apply bg-surface-light text-slate-900 dark:bg-surface-dark dark:text-slate-100 antialiased selection:bg-ocean-600 selection:text-white min-h-screen transition-colors duration-200 font-sans;
   }
 }
 
-/* Custom Scrollbars */
+/* Ambient Ocean Blue Background Glow */
+.bg-ambient-glow {
+  background-radial: radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.12) 0%, rgba(9, 13, 22, 0) 70%);
+}
+
+.dark .bg-ambient-glow {
+  background-image: radial-gradient(circle at 50% -10%, rgba(2, 132, 199, 0.15) 0%, rgba(9, 13, 22, 0) 65%);
+}
+
+.light .bg-ambient-glow {
+  background-image: radial-gradient(circle at 50% -10%, rgba(14, 165, 233, 0.08) 0%, rgba(248, 250, 252, 0) 65%);
+}
+
+/* 3D Hardware Accelerated Transition Utility */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.tilt-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+.tilt-card:hover {
+  transform: translate3d(0, -3px, 0);
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .tilt-card:hover {
+    transform: none !important;
+  }
+}
+
+/* Custom Minimalist Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  @apply bg-slate-100 dark:bg-surface-dark;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  @apply bg-slate-300 dark:bg-slate-800 rounded;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  @apply bg-slate-400 dark:bg-slate-700;
+}
+
+/* Printable Delivery Note Layout (@media print) */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header, aside, .no-print, button, .theme-switcher, .role-switcher {
+    display: none !important;
+  }
+
+  .print-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+  }
+
+  .print-card {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    color: #000000 !important;
+  }
 }

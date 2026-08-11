@@ -5,13 +5,12 @@ import { Badge } from '../components/common/Badge';
 import { DataTable } from '../components/common/DataTable';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Customer, Product, SalesChallan } from '../types';
+import { Product, SalesChallan } from '../types';
 import {
   Users,
   Package,
   AlertTriangle,
   FileText,
-  DollarSign,
   Plus,
   ArrowRight,
   TrendingUp,
@@ -19,6 +18,7 @@ import {
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [customersCount, setCustomersCount] = useState(0);
@@ -46,7 +46,6 @@ export const Dashboard: React.FC = () => {
           const list: SalesChallan[] = challanRes.data || [];
           setRecentChallans(list);
 
-          // Calculate revenue & draft count
           const confirmed = list.filter((c) => c.status === 'CONFIRMED');
           const revenue = confirmed.reduce(
             (acc, curr) => acc + Number(curr.totalAmount || 0),
@@ -72,22 +71,22 @@ export const Dashboard: React.FC = () => {
       header: 'Challan #',
       accessor: 'challanNumber' as keyof SalesChallan,
       cell: (c: SalesChallan) => (
-        <span className="font-mono font-bold text-blue-400">{c.challanNumber}</span>
+        <span className="font-mono font-bold text-ocean-600 dark:text-ocean-400">{c.challanNumber}</span>
       ),
     },
     {
       header: 'Customer',
       cell: (c: SalesChallan) => (
         <div>
-          <p className="font-semibold text-slate-200">{c.customer?.name || 'N/A'}</p>
-          <p className="text-xs text-slate-400">{c.customer?.companyName || ''}</p>
+          <p className="font-semibold text-slate-900 dark:text-slate-200">{c.customer?.name || 'N/A'}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{c.customer?.businessName || c.customer?.companyName || ''}</p>
         </div>
       ),
     },
     {
       header: 'Total Amount',
       cell: (c: SalesChallan) => (
-        <span className="font-mono font-semibold text-slate-200">
+        <span className="font-mono font-semibold text-slate-900 dark:text-slate-200">
           ₹{Number(c.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </span>
       ),
@@ -99,7 +98,7 @@ export const Dashboard: React.FC = () => {
     {
       header: 'Created Date',
       cell: (c: SalesChallan) => (
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-slate-500 dark:text-slate-400">
           {new Date(c.createdAt).toLocaleDateString()}
         </span>
       ),
@@ -107,127 +106,127 @@ export const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <Sidebar />
+    <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+      <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar title="Operations & CRM Overview" />
+        <Navbar title="Operations Overview" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
 
-        <main className="p-8 space-y-8 flex-1">
+        <main className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
           {/* Quick Actions Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">System Overview</h1>
-              <p className="text-slate-400 text-sm">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Operations & Logistics Summary</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
                 Real-time stock warnings, sales revenue, and customer CRM metrics
               </p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate('/sales-challans/new')}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center gap-2"
+                className="px-4 py-2.5 bg-ocean-600 hover:bg-ocean-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-ocean-600/30 transition flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                Create Sales Challan
+                New Delivery Order
               </button>
             </div>
           </div>
 
-          {/* Metric Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Metric KPI Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {/* Total Customers */}
             <div
               onClick={() => navigate('/customers')}
-              className="bg-slate-900 border border-slate-800 p-6 rounded-2xl cursor-pointer hover:border-slate-700 transition shadow-lg group"
+              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Total Customers
                 </span>
-                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 group-hover:scale-110 transition">
+                <div className="p-2.5 rounded-xl bg-ocean-50 dark:bg-ocean-950 text-ocean-600 dark:text-ocean-400 group-hover:scale-110 transition">
                   <Users className="w-5 h-5" />
                 </div>
               </div>
-              <p className="text-3xl font-extrabold text-white mt-4">{customersCount}</p>
-              <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                Active CRM Accounts <ArrowRight className="w-3 h-3 text-blue-400" />
+              <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-3 font-mono">{customersCount}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1">
+                Active CRM Accounts <ArrowRight className="w-3 h-3 text-ocean-600 dark:text-ocean-400" />
               </p>
             </div>
 
             {/* Total SKU Inventory */}
             <div
               onClick={() => navigate('/inventory')}
-              className="bg-slate-900 border border-slate-800 p-6 rounded-2xl cursor-pointer hover:border-slate-700 transition shadow-lg group"
+              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Products in Master
+                <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Master Products
                 </span>
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition">
+                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition">
                   <Package className="w-5 h-5" />
                 </div>
               </div>
-              <p className="text-3xl font-extrabold text-white mt-4">{productsCount}</p>
-              <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                Managed SKUs <ArrowRight className="w-3 h-3 text-indigo-400" />
+              <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-3 font-mono">{productsCount}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1">
+                Active Product SKUs <ArrowRight className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
               </p>
             </div>
 
-            {/* Low Stock Alerts */}
+            {/* Low Stock Warnings */}
             <div
-              onClick={() => navigate('/inventory?filter=low-stock')}
-              className="bg-slate-900 border border-amber-500/30 p-6 rounded-2xl cursor-pointer hover:border-amber-500/60 transition shadow-lg group relative overflow-hidden"
+              onClick={() => navigate('/inventory')}
+              className="bg-white dark:bg-surface-cardDark border border-amber-300 dark:border-amber-500/40 p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-amber-500 transition shadow-sm tilt-card group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                   Low Stock Warnings
                 </span>
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 group-hover:scale-110 transition">
+                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
               </div>
-              <p className="text-3xl font-extrabold text-amber-400 mt-4">
+              <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-3 font-mono">
                 {lowStockProducts.length}
               </p>
-              <p className="text-xs text-amber-300/80 mt-1 flex items-center gap-1">
-                Items requiring restock <ArrowRight className="w-3 h-3 text-amber-400" />
+              <p className="text-xs text-amber-600/90 dark:text-amber-300/80 mt-1.5 flex items-center gap-1">
+                Items requiring restock <ArrowRight className="w-3 h-3 text-amber-600 dark:text-amber-400" />
               </p>
             </div>
 
             {/* Confirmed Sales Revenue */}
             <div
               onClick={() => navigate('/sales-challans')}
-              className="bg-slate-900 border border-slate-800 p-6 rounded-2xl cursor-pointer hover:border-slate-700 transition shadow-lg group"
+              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Confirmed Sales
                 </span>
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition">
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition">
                   <TrendingUp className="w-5 h-5" />
                 </div>
               </div>
-              <p className="text-2xl font-extrabold text-white mt-4 font-mono">
+              <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-3 font-mono">
                 ₹{totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </p>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
                 {draftCount} Draft orders pending
               </p>
             </div>
           </div>
 
-          {/* Section: Low Stock Warning Banner & Recent Activity Table */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Section: Low Stock Warning & Recent Activity Table */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Recent Challans List */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-3.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-400" /> Recent Sales Challans
+                <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-ocean-600 dark:text-ocean-400" /> Recent Sales Delivery Orders
                 </h3>
                 <button
                   onClick={() => navigate('/sales-challans')}
-                  className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition"
+                  className="text-xs font-semibold text-ocean-600 dark:text-ocean-400 hover:underline transition"
                 >
-                  View All Challans →
+                  View All Orders →
                 </button>
               </div>
 
@@ -235,44 +234,44 @@ export const Dashboard: React.FC = () => {
                 columns={challanColumns}
                 data={recentChallans}
                 loading={loading}
-                emptyMessage="No sales challans found. Create your first delivery note!"
+                emptyMessage="No delivery orders found. Create your first sales delivery note!"
                 onRowClick={(c) => navigate(`/sales-challans/${c.id}`)}
               />
             </div>
 
             {/* Low Stock Warning Sidebar Widget */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2 text-amber-400">
-                  <AlertTriangle className="w-5 h-5" /> Low Stock Alerts
+                <h3 className="text-base font-bold text-amber-600 dark:text-amber-400 tracking-tight flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" /> Restock Callouts
                 </h3>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                   {lowStockProducts.length} Items
                 </span>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 divide-y divide-slate-800/80 shadow-lg">
+              <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark rounded-xl p-4 divide-y divide-slate-100 dark:divide-slate-800/80 shadow-sm">
                 {lowStockProducts.length === 0 ? (
-                  <p className="text-sm text-slate-400 text-center py-6">
-                    ✅ All product stock levels are healthy!
+                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">
+                    ✅ All inventory levels are healthy!
                   </p>
                 ) : (
                   lowStockProducts.slice(0, 5).map((p) => (
                     <div
                       key={p.id}
                       onClick={() => navigate('/inventory')}
-                      className="py-3 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 px-2 rounded-lg transition"
+                      className="py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-lg transition"
                     >
                       <div>
-                        <p className="font-semibold text-sm text-slate-200">{p.name}</p>
-                        <p className="text-xs text-slate-400 font-mono">SKU: {p.sku}</p>
+                        <p className="font-semibold text-xs text-slate-900 dark:text-slate-200">{p.name}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">SKU: {p.sku}</p>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs font-bold font-mono text-rose-400">
+                        <span className="text-xs font-bold font-mono text-rose-600 dark:text-rose-400">
                           {p.currentStock} / {p.minStock} min
                         </span>
-                        <p className="text-[10px] text-amber-400 font-medium uppercase">
-                          Restock needed
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold uppercase">
+                          Low Stock
                         </p>
                       </div>
                     </div>
