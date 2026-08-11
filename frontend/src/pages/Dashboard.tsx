@@ -112,13 +112,18 @@ export const Dashboard: React.FC = () => {
         <Navbar title="Operations Overview" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
 
         <main className="p-4 sm:p-6 lg:p-8 space-y-8 flex-1">
-          {/* Section 1: Quick Actions & Operations Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-section-reveal">
+          {/* Section 1: Operations Workspace Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-up">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Operations Workspace Summary</h1>
-              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
-                Real-time stock warnings, sales revenue, and customer CRM metrics
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded bg-ocean-50 dark:bg-ocean-950 text-ocean-700 dark:text-ocean-400 border border-ocean-200 dark:border-ocean-800">
+                  WORKSPACE ACTIVE
+                </span>
+                <span className="text-xs text-slate-400">• Real-Time Logistics</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
+                Operations & Sales Overview
+              </h1>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -131,96 +136,93 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Section 2: Metric KPI Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 animate-section-reveal">
-            {/* Total Customers */}
-            <div
-              onClick={() => navigate('/customers')}
-              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card-subtle group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Total Customers
-                </span>
-                <div className="p-2.5 rounded-xl bg-ocean-50 dark:bg-ocean-950 text-ocean-600 dark:text-ocean-400 group-hover:scale-105 transition">
-                  <Users className="w-5 h-5" />
-                </div>
-              </div>
-              <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-3 font-mono">{customersCount}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1">
-                Active CRM Accounts <ArrowRight className="w-3 h-3 text-ocean-600 dark:text-ocean-400" />
-              </p>
+          {/* Section 2: Integrated Metric KPI Bar */}
+          <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark rounded-2xl p-6 shadow-sm animate-fade-up">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+              Operational Key Metrics
             </div>
-
-            {/* Total SKU Inventory */}
-            <div
-              onClick={() => navigate('/inventory')}
-              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card-subtle group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Master Products
-                </span>
-                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition">
-                  <Package className="w-5 h-5" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800/80 gap-4 sm:gap-0">
+              {/* Metric 1: Customers */}
+              <div
+                onClick={() => navigate('/customers')}
+                className="sm:px-6 py-2 cursor-pointer group hover:bg-slate-50/50 dark:hover:bg-slate-900/30 rounded-xl transition"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Total Customers
+                  </span>
+                  <Users className="w-4 h-4 text-ocean-600 dark:text-ocean-400" />
                 </div>
+                <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-2 font-mono">{customersCount}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                  Active CRM Accounts <ArrowRight className="w-3 h-3 text-ocean-600 dark:text-ocean-400" />
+                </p>
               </div>
-              <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-3 font-mono">{productsCount}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1">
-                Active Product SKUs <ArrowRight className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-              </p>
-            </div>
 
-            {/* Low Stock Warnings */}
-            <div
-              onClick={() => navigate('/inventory')}
-              className="bg-white dark:bg-surface-cardDark border border-amber-300 dark:border-amber-500/40 p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-amber-500 transition shadow-sm tilt-card-subtle group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                  Low Stock Warnings
-                </span>
-                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition">
-                  <AlertTriangle className="w-5 h-5" />
+              {/* Metric 2: Master Products */}
+              <div
+                onClick={() => navigate('/inventory')}
+                className="sm:px-6 py-2 cursor-pointer group hover:bg-slate-50/50 dark:hover:bg-slate-900/30 rounded-xl transition"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Master Products
+                  </span>
+                  <Package className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                 </div>
+                <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-2 font-mono">{productsCount}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                  Active SKU Master <ArrowRight className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                </p>
               </div>
-              <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-3 font-mono">
-                {lowStockProducts.length}
-              </p>
-              <p className="text-xs text-amber-600/90 dark:text-amber-300/80 mt-1.5 flex items-center gap-1">
-                Items requiring restock <ArrowRight className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-              </p>
-            </div>
 
-            {/* Confirmed Sales Revenue */}
-            <div
-              onClick={() => navigate('/sales-challans')}
-              className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl cursor-pointer hover:border-ocean-400 dark:hover:border-ocean-600 transition shadow-sm tilt-card-subtle group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Confirmed Sales
-                </span>
-                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition">
-                  <TrendingUp className="w-5 h-5" />
+              {/* Metric 3: Low Stock Warnings */}
+              <div
+                onClick={() => navigate('/inventory')}
+                className="sm:px-6 py-2 cursor-pointer group hover:bg-slate-50/50 dark:hover:bg-slate-900/30 rounded-xl transition"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                    Restock Warnings
+                  </span>
+                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 </div>
+                <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-2 font-mono">
+                  {lowStockProducts.length}
+                </p>
+                <p className="text-xs text-amber-600/90 dark:text-amber-300/80 mt-1 flex items-center gap-1">
+                  Requires Restock <ArrowRight className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                </p>
               </div>
-              <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-3 font-mono">
-                ₹{totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-                {draftCount} Draft orders pending
-              </p>
+
+              {/* Metric 4: Confirmed Revenue */}
+              <div
+                onClick={() => navigate('/sales-challans')}
+                className="sm:px-6 py-2 cursor-pointer group hover:bg-slate-50/50 dark:hover:bg-slate-900/30 rounded-xl transition"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Confirmed Sales
+                  </span>
+                  <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2 font-mono">
+                  ₹{totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {draftCount} Draft orders pending
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Section 3: Recent Activity Table & Restock Intelligence */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-section-reveal">
-            {/* Recent Challans List */}
+          {/* Section 3: Sales Activity Table & Inventory Intelligence Callouts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up">
+            {/* Sales Orders Activity Table */}
             <div className="lg:col-span-2 space-y-3.5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-ocean-600 dark:text-ocean-400" /> Recent Sales Delivery Orders
+                  <FileText className="w-4 h-4 text-ocean-600 dark:text-ocean-400" /> Sales Orders Activity
                 </h3>
                 <button
                   onClick={() => navigate('/sales-challans')}
@@ -239,11 +241,11 @@ export const Dashboard: React.FC = () => {
               />
             </div>
 
-            {/* Low Stock Warning Sidebar Widget */}
+            {/* Inventory Intelligence Callouts */}
             <div className="space-y-3.5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800">
                 <h3 className="text-base font-bold text-amber-600 dark:text-amber-400 tracking-tight flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" /> Restock Callouts
+                  <AlertTriangle className="w-4 h-4" /> Inventory Intelligence
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                   {lowStockProducts.length} Items

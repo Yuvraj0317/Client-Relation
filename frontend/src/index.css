@@ -19,20 +19,24 @@
   }
 }
 
-/* Quiet Ambient Radial Glow Background */
-.bg-ambient-glow {
-  background-image: radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.08) 0%, rgba(9, 13, 22, 0) 70%);
+/* Abstract Monochrome Operations Canvas Background */
+.bg-abstract-grid {
+  background-image: 
+    linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.07) 0%, rgba(248, 250, 252, 0) 70%);
+  background-size: 40px 40px, 40px 40px, 100% 100%;
 }
 
-.dark .bg-ambient-glow {
-  background-image: radial-gradient(circle at 50% -10%, rgba(2, 132, 199, 0.12) 0%, rgba(9, 13, 22, 0) 65%);
+.dark .bg-abstract-grid {
+  background-image: 
+    linear-gradient(to right, rgba(30, 41, 59, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(30, 41, 59, 0.35) 1px, transparent 1px),
+    radial-gradient(circle at 50% -10%, rgba(2, 132, 199, 0.12) 0%, rgba(9, 13, 22, 0) 65%);
+  background-size: 40px 40px, 40px 40px, 100% 100%;
 }
 
-.light .bg-ambient-glow {
-  background-image: radial-gradient(circle at 50% -10%, rgba(14, 165, 233, 0.06) 0%, rgba(248, 250, 252, 0) 65%);
-}
-
-/* Subtle Desktop-Only Card Elevation & Tilt (Max 1-2 Degrees) */
+/* Subtle Desktop-Only Card Elevation & Tilt (Max 1 Degree) */
 @media (hover: hover) and (pointer: fine) {
   .tilt-card-subtle {
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
@@ -44,16 +48,20 @@
   }
 }
 
-/* Section Reveal Keyframes for Scroll Disclosure */
+/* Smooth Entrance & Section Disclosure Animations */
 @keyframes sectionFadeUp {
   from {
     opacity: 0;
-    transform: translate3d(0, 12px, 0);
+    transform: translate3d(0, 10px, 0);
   }
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
   }
+}
+
+.animate-fade-up {
+  animation: sectionFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-section-reveal {
@@ -71,7 +79,7 @@
   .tilt-card-subtle:hover {
     transform: none !important;
   }
-  .animate-section-reveal {
+  .animate-fade-up, .animate-section-reveal {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
