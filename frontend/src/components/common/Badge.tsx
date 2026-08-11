@@ -1,36 +1,58 @@
 import React from 'react';
+import { AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react';
 
 interface BadgeProps {
   status: string;
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
-  children?: React.ReactNode;
+  size?: 'sm' | 'md';
 }
 
-export const Badge: React.FC<BadgeProps> = ({ status, children }) => {
-  const getBadgeStyle = (val: string) => {
-    const s = val.toUpperCase();
-    if (s === 'CONFIRMED' || s === 'ACTIVE' || s === 'COMPLETED' || s === 'IN' || s === 'DISTRIBUTOR') {
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800/80';
+export const Badge: React.FC<BadgeProps> = ({ status, size = 'md' }) => {
+  const normalizedStatus = status.toUpperCase();
+
+  const getStatusStyles = () => {
+    switch (normalizedStatus) {
+      case 'CONFIRMED':
+      case 'ACTIVE':
+      case 'COMPLETED':
+      case 'IN STOCK':
+        return {
+          bg: 'bg-mono-900 text-white dark:bg-white dark:text-black font-extrabold border border-mono-800 dark:border-mono-200',
+          icon: CheckCircle2,
+        };
+      case 'DRAFT':
+      case 'PENDING':
+      case 'LEAD':
+        return {
+          bg: 'bg-mono-100 text-mono-700 border border-mono-300 dark:bg-mono-900 dark:text-mono-300 dark:border-mono-800 font-semibold',
+          icon: Clock,
+        };
+      case 'CANCELLED':
+      case 'INACTIVE':
+        return {
+          bg: 'bg-mono-200 text-mono-900 border border-mono-400 dark:bg-mono-950 dark:text-mono-400 dark:border-mono-800 font-medium line-through decoration-mono-400',
+          icon: XCircle,
+        };
+      case 'LOW STOCK':
+      case 'WARNING':
+        return {
+          bg: 'bg-mono-100 text-mono-900 border border-mono-400 dark:bg-mono-900 dark:text-white dark:border-mono-700 font-extrabold',
+          icon: AlertTriangle,
+        };
+      default:
+        return {
+          bg: 'bg-mono-100 text-mono-800 border border-mono-300 dark:bg-mono-900 dark:text-mono-200 dark:border-mono-800 font-medium',
+          icon: Clock,
+        };
     }
-    if (s === 'DRAFT' || s === 'PROSPECT' || s === 'PENDING' || s === 'WHOLESALE' || s === 'WHOLESALER' || s === 'LOW_STOCK') {
-      return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800/80';
-    }
-    if (s === 'CANCELLED' || s === 'INACTIVE' || s === 'OUT' || s === 'OUT_OF_STOCK') {
-      return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-800/80';
-    }
-    if (s === 'LEAD' || s === 'RETAIL' || s === 'RETAILER' || s === 'MANUAL') {
-      return 'bg-ocean-50 text-ocean-700 border-ocean-200 dark:bg-ocean-950/60 dark:text-ocean-300 dark:border-ocean-800/80';
-    }
-    return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
   };
 
+  const { bg, icon: Icon } = getStatusStyles();
+  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs';
+
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border tracking-wide uppercase ${getBadgeStyle(
-        status
-      )}`}
-    >
-      {children || status}
+    <span className={`inline-flex items-center gap-1.5 rounded-full uppercase tracking-wider font-mono ${sizeClasses} ${bg}`}>
+      <Icon className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
+      <span>{normalizedStatus}</span>
     </span>
   );
 };

@@ -4,62 +4,56 @@ import { Sidebar } from '../components/common/Sidebar';
 import { Badge } from '../components/common/Badge';
 import { DataTable } from '../components/common/DataTable';
 import { Modal } from '../components/common/Modal';
-import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Customer, CustomerStatus, CustomerType, CustomerFollowUp } from '../types';
+import { Customer, CustomerFollowUp, CustomerType } from '../types';
 import {
-  Search,
   Plus,
+  Search,
+  Building,
   Phone,
   Mail,
-  Calendar,
+  MapPin,
   MessageSquare,
-  Clock,
-  Send,
-  Building2,
+  X,
 } from 'lucide-react';
 
 export const Customers: React.FC = () => {
-  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [tierFilter, setTierFilter] = useState<string>('ALL');
 
   // New Customer Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({
-    name: '',
-    companyName: '',
-    email: '',
-    phone: '',
-    address: '',
-    customerType: 'RETAILER' as CustomerType,
-    status: 'LEAD' as CustomerStatus,
-  });
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Selected Customer Detail Drawer
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    businessName: '',
+    gstNumber: '',
+    address: '',
+    customerType: 'RETAILER' as CustomerType,
+  });
+
+  // Slide-over Timeline Drawer
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [followUps, setFollowUps] = useState<CustomerFollowUp[]>([]);
+  const [loadingFollowUps, setLoadingFollowUps] = useState(false);
   const [newNote, setNewNote] = useState('');
-  const [newFollowUpDate, setNewFollowUpDate] = useState('');
-
-  const canEdit = user?.role === 'ADMIN' || user?.role === 'SALES';
+  const [addingFollowUp, setAddingFollowUp] = useState(false);
 
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      let query = `/customers?search=${encodeURIComponent(search)}`;
-      if (typeFilter) query += `&customerType=${typeFilter}`;
-      if (statusFilter) query += `&status=${statusFilter}`;
-
-      const res: any = await api.get(query);
+      let url = '/customers?limit=100';
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      const res: any = await api.get(url);
       if (res.success) {
-        setCustomers(res.data);
+        setCustomers(res.data || []);
       }
     } catch (err) {
       console.error('Error fetching customers:', err);
@@ -70,430 +64,390 @@ export const Customers: React.FC = () => {
 
   useEffect(() => {
     fetchCustomers();
-  }, [search, typeFilter, statusFilter]);
+  }, [search]);
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setSubmitting(true);
     try {
-      const res: any = await api.post('/customers', newCustomer);
+      const res: any = await api.post('/customers', {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        mobile: formData.phone,
+        businessName: formData.businessName,
+        gstin: formData.gstNumber,
+        address: formData.address,
+        tier: formData.customerType,
+      });
       if (res.success) {
-        setIsModalOpen(false);
-        setNewCustomer({
+        setIsAddModalOpen(false);
+        setFormData({
           name: '',
-          companyName: '',
           email: '',
           phone: '',
+          businessName: '',
+          gstNumber: '',
           address: '',
           customerType: 'RETAILER',
-          status: 'LEAD',
         });
         fetchCustomers();
       }
     } catch (err: any) {
-      setFormError(err.message || 'Failed to create customer');
+      setFormError(err.message || 'Failed to create customer record');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const openCustomerDetail = async (cust: Customer) => {
-    setSelectedCustomer(cust);
+  const openFollowUpDrawer = async (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setLoadingFollowUps(true);
     try {
-      const res: any = await api.get(`/customers/${cust.id}/follow-ups`);
+      const res: any = await api.get(`/customers/${customer.id}/followups`);
       if (res.success) {
-        setFollowUps(res.data);
+        setFollowUps(res.data || []);
       }
     } catch (err) {
-      console.error('Failed to load followups:', err);
+      console.error('Error fetching follow-ups:', err);
+    } finally {
+      setLoadingFollowUps(false);
     }
   };
 
   const handleAddFollowUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCustomer || !newNote || !newFollowUpDate) return;
+    if (!selectedCustomer || !newNote.trim()) return;
+    setAddingFollowUp(true);
     try {
-      const res: any = await api.post(`/customers/${selectedCustomer.id}/follow-ups`, {
-        note: newNote,
-        followUpDate: new Date(newFollowUpDate).toISOString(),
-        status: 'PENDING',
+      const res: any = await api.post(`/customers/${selectedCustomer.id}/followups`, {
+        notes: newNote,
       });
       if (res.success) {
         setNewNote('');
-        setNewFollowUpDate('');
-        openCustomerDetail(selectedCustomer);
+        openFollowUpDrawer(selectedCustomer);
       }
     } catch (err) {
-      console.error('Failed to add follow-up:', err);
+      console.error('Error adding follow-up note:', err);
+    } finally {
+      setAddingFollowUp(false);
     }
   };
 
+  const filteredCustomers = customers.filter((c) => {
+    if (tierFilter === 'ALL') return true;
+    return c.customerType === tierFilter;
+  });
+
   const columns = [
     {
-      header: 'Customer Account',
+      header: 'NAME / BUSINESS',
       cell: (c: Customer) => (
         <div>
-          <p className="font-bold text-slate-900 dark:text-slate-100">{c.name}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{c.businessName || c.companyName || 'Individual Account'}</p>
-        </div>
-      ),
-    },
-    {
-      header: 'Contact Info',
-      cell: (c: Customer) => (
-        <div className="space-y-0.5 text-xs text-slate-600 dark:text-slate-300">
-          <p className="flex items-center gap-1.5">
-            <Phone className="w-3 h-3 text-ocean-600 dark:text-ocean-400" /> {c.phone}
+          <p className="font-bold text-mono-900 dark:text-white">{c.name}</p>
+          <p className="text-xs text-mono-500 font-mono flex items-center gap-1">
+            <Building className="w-3 h-3" /> {c.businessName || c.companyName || 'Individual Buyer'}
           </p>
-          {c.email && (
-            <p className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-              <Mail className="w-3 h-3 text-slate-400" /> {c.email}
-            </p>
-          )}
         </div>
       ),
     },
     {
-      header: 'Buyer Classification',
-      cell: (c: Customer) => <Badge status={c.customerType} />,
-    },
-    {
-      header: 'Lifecycle Status',
-      cell: (c: Customer) => <Badge status={c.status} />,
-    },
-    {
-      header: 'CRM Follow-ups',
+      header: 'CONTACT',
       cell: (c: Customer) => (
-        <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-          {c._count?.followUps || 0} Interactions
+        <div className="space-y-0.5 font-mono text-xs">
+          <p className="flex items-center gap-1 text-mono-800 dark:text-mono-200">
+            <Phone className="w-3 h-3 text-mono-500" /> {c.mobile || c.phone}
+          </p>
+          <p className="flex items-center gap-1 text-mono-500 dark:text-mono-400">
+            <Mail className="w-3 h-3" /> {c.email}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: 'TYPE',
+      cell: (c: Customer) => (
+        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-mono-200 dark:bg-mono-800 text-mono-900 dark:text-white border border-mono-300 dark:border-mono-700">
+          {c.customerType || 'RETAILER'}
         </span>
+      ),
+    },
+    {
+      header: 'ADDRESS',
+      cell: (c: Customer) => (
+        <span className="text-xs text-mono-500 dark:text-mono-400 flex items-center gap-1 truncate max-w-xs">
+          <MapPin className="w-3 h-3 text-mono-400" /> {c.address || 'N/A'}
+        </span>
+      ),
+    },
+    {
+      header: 'STATUS',
+      cell: (c: Customer) => <Badge status={c.status || 'ACTIVE'} size="sm" />,
+    },
+    {
+      header: 'ACTIONS',
+      cell: (c: Customer) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            openFollowUpDrawer(c);
+          }}
+          className="px-2.5 py-1 text-xs font-mono font-bold bg-mono-100 dark:bg-mono-900 hover:bg-mono-200 dark:hover:bg-mono-800 text-mono-900 dark:text-white rounded-lg border border-mono-300 dark:border-mono-700 transition flex items-center gap-1"
+        >
+          <MessageSquare className="w-3 h-3" /> Timeline
+        </button>
       ),
     },
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+    <div className="flex min-h-screen bg-mono-100 dark:bg-surface-dark text-mono-900 dark:text-white font-sans transition-colors duration-200">
       <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar title="Customer CRM Directory" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
+        <Navbar title="Customer Directory" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
 
         <main className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
-          {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-up">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Customer Database</h1>
-              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
-                Manage accounts, buyer classifications, and follow-up activity timelines
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-mono-900 dark:text-white">
+                CUSTOMERS
+              </h1>
+              <p className="text-xs text-mono-500 dark:text-mono-400">
+                Customer relationship workspace and account records.
               </p>
             </div>
-            {canEdit && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2.5 bg-ocean-600 hover:bg-ocean-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-ocean-600/30 transition flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" /> Add New Customer
-              </button>
-            )}
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-4 py-2.5 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black text-xs sm:text-sm font-extrabold rounded-xl shadow-sm transition flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              New Customer Account
+            </button>
           </div>
 
-          {/* Filter Bar */}
-          <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between shadow-sm transition-colors duration-200">
-            <div className="flex-1 min-w-[240px] relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+          {/* Filters Bar */}
+          <div className="bg-white dark:bg-surface-cardDark border border-mono-200 dark:border-surface-borderDark rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-up">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-mono-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search by customer name, business, email, phone..."
+                placeholder="Search by name, business, mobile..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-ocean-600 dark:focus:border-ocean-500"
+                className="w-full pl-9 pr-4 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs sm:text-sm text-mono-900 dark:text-white placeholder-mono-400 focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
               />
             </div>
 
-            <div className="flex items-center gap-3">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-ocean-600"
-              >
-                <option value="">All Buyer Tiers</option>
-                <option value="RETAILER">Retailer</option>
-                <option value="WHOLESALER">Wholesaler</option>
-                <option value="DISTRIBUTOR">Distributor</option>
-                <option value="DIRECT">Direct Buyer</option>
-              </select>
+            {/* Segmented Filter Pills */}
+            <div className="flex items-center gap-1 bg-mono-100 dark:bg-mono-950 p-1 rounded-xl border border-mono-200 dark:border-mono-800 w-full sm:w-auto">
+              {['ALL', 'RETAILER', 'WHOLESALER', 'DISTRIBUTOR'].map((tier) => (
+                <button
+                  key={tier}
+                  onClick={() => setTierFilter(tier)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
+                    tierFilter === tier
+                      ? 'bg-mono-900 text-white dark:bg-white dark:text-black shadow-sm'
+                      : 'text-mono-600 dark:text-mono-400 hover:text-mono-900 dark:hover:text-white'
+                  }`}
+                >
+                  {tier}
+                </button>
+              ))}
+            </div>
+          </div>
 
+          {/* Customers Data Workspace */}
+          <div className="animate-fade-up">
+            <DataTable
+              columns={columns}
+              data={filteredCustomers}
+              loading={loading}
+              emptyMessage="No customer accounts found matching your query."
+              onRowClick={(c) => openFollowUpDrawer(c)}
+            />
+          </div>
+        </main>
+      </div>
+
+      {/* New Customer Modal */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Add New Customer Account"
+        maxWidth="lg"
+      >
+        {formError && (
+          <div className="mb-4 p-3 rounded-xl bg-mono-100 dark:bg-mono-900 border border-mono-300 dark:border-mono-700 text-mono-900 dark:text-mono-100 text-xs">
+            {formError}
+          </div>
+        )}
+        <form onSubmit={handleCreateCustomer} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+                Contact Name *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Apex Global"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+                Business Name
+              </label>
+              <input
+                type="text"
+                placeholder="Apex Logistics Ltd"
+                value={formData.businessName}
+                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+                Mobile / Phone *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="+91 9876543210"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+                Email Address *
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="contact@apex.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+                GSTIN
+              </label>
+              <input
+                type="text"
+                placeholder="27AAAAA0000A1Z5"
+                value={formData.gstNumber}
+                onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
+                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+                Customer Type
+              </label>
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-ocean-600"
+                value={formData.customerType}
+                onChange={(e) => setFormData({ ...formData, customerType: e.target.value as CustomerType })}
+                className="w-full px-3 py-2 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-mono"
               >
-                <option value="">All Statuses</option>
-                <option value="LEAD">Lead</option>
-                <option value="PROSPECT">Prospect</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
+                <option value="RETAILER">RETAILER</option>
+                <option value="WHOLESALER">WHOLESALER</option>
+                <option value="DISTRIBUTOR">DISTRIBUTOR</option>
+                <option value="DIRECT">DIRECT</option>
               </select>
             </div>
           </div>
 
-          {/* Customer Table */}
-          <DataTable
-            columns={columns}
-            data={customers}
-            loading={loading}
-            emptyMessage="No customer accounts found. Click 'Add New Customer' to add your first buyer."
-            onRowClick={(cust) => openCustomerDetail(cust)}
-          />
-
-          {/* New Customer Modal */}
-          <Modal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            title="Register Customer Account"
-          >
-            <form onSubmit={handleCreateCustomer} className="space-y-4">
-              {formError && (
-                <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-400 text-xs font-medium rounded-lg">
-                  {formError}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                    Customer Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newCustomer.name}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-                    placeholder="Apex Logistics"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-ocean-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                    Business / Company Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newCustomer.companyName}
-                    onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, companyName: e.target.value })
-                    }
-                    placeholder="Apex Trading Corp"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-ocean-600"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newCustomer.phone}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                    placeholder="+91 9876543210"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-ocean-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={newCustomer.email}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                    placeholder="sales@apex.com"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-ocean-600"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                  Delivery Address *
-                </label>
-                <textarea
-                  required
-                  rows={2}
-                  value={newCustomer.address}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
-                  placeholder="Building 4, Commercial Hub, Mumbai"
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-ocean-600"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                    Buyer Classification
-                  </label>
-                  <select
-                    value={newCustomer.customerType}
-                    onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, customerType: e.target.value as CustomerType })
-                    }
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-ocean-600"
-                  >
-                    <option value="RETAILER">Retailer</option>
-                    <option value="WHOLESALER">Wholesaler</option>
-                    <option value="DISTRIBUTOR">Distributor</option>
-                    <option value="DIRECT">Direct Buyer</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                    Initial Status
-                  </label>
-                  <select
-                    value={newCustomer.status}
-                    onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, status: e.target.value as CustomerStatus })
-                    }
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-ocean-600"
-                  >
-                    <option value="LEAD">Lead</option>
-                    <option value="PROSPECT">Prospect</option>
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-200 dark:border-surface-borderDark">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-ocean-600 hover:bg-ocean-700 text-white text-xs font-semibold rounded-lg shadow-md shadow-ocean-600/30 transition"
-                >
-                  Create Account
-                </button>
-              </div>
-            </form>
-          </Modal>
-
-          {/* Selected Customer Follow-up Timeline Drawer */}
-          {selectedCustomer && (
-            <Modal
-              isOpen={!!selectedCustomer}
-              onClose={() => setSelectedCustomer(null)}
-              title={`Customer Account: ${selectedCustomer.name}`}
-              maxWidth="xl"
+          <div className="flex justify-end gap-3 pt-4 border-t border-mono-200 dark:border-mono-800">
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-4 py-2 text-xs font-mono font-bold border border-mono-200 dark:border-mono-800 rounded-xl text-mono-600 dark:text-mono-400 hover:text-mono-900 dark:hover:text-white transition"
             >
-              <div className="space-y-6">
-                {/* Account Summary Banner */}
-                <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 block">Phone</span>
-                    <span className="font-semibold text-slate-900 dark:text-slate-200">{selectedCustomer.phone}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 block">Email</span>
-                    <span className="font-semibold text-slate-900 dark:text-slate-200">
-                      {selectedCustomer.email || 'N/A'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Tier</span>
-                    <Badge status={selectedCustomer.customerType} />
-                  </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Status</span>
-                    <Badge status={selectedCustomer.status} />
-                  </div>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-2 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black text-xs font-extrabold rounded-xl shadow-sm transition disabled:opacity-50"
+            >
+              {submitting ? 'Creating...' : 'Create Account'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Slide-over Follow-up Timeline Drawer */}
+      {selectedCustomer && (
+        <div className="fixed inset-0 z-50 flex justify-end no-print">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedCustomer(null)} />
+          <div className="relative w-full max-w-md bg-white dark:bg-surface-cardDark border-l border-mono-200 dark:border-surface-borderDark h-full z-10 p-6 flex flex-col justify-between shadow-2xl animate-fade-up">
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-mono-200 dark:border-mono-800">
+                <div>
+                  <h2 className="text-base font-bold text-mono-900 dark:text-white">{selectedCustomer.name}</h2>
+                  <p className="text-xs text-mono-500 font-mono">{selectedCustomer.businessName || 'Individual Buyer'}</p>
                 </div>
-
-                {/* Add Follow-up Note Form */}
-                {canEdit && (
-                  <form
-                    onSubmit={handleAddFollowUp}
-                    className="bg-slate-50/60 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3"
-                  >
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase flex items-center gap-1.5">
-                      <MessageSquare className="w-4 h-4 text-ocean-600 dark:text-ocean-400" /> Log Activity Note
-                    </p>
-
-                    <div>
-                      <textarea
-                        required
-                        rows={2}
-                        placeholder="Write conversation details, quote updates, or customer feedback..."
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-ocean-600"
-                      />
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        <input
-                          type="datetime-local"
-                          required
-                          value={newFollowUpDate}
-                          onChange={(e) => setNewFollowUpDate(e.target.value)}
-                          className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-ocean-600"
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="px-4 py-1.5 bg-ocean-600 hover:bg-ocean-700 text-white text-xs font-semibold rounded-lg shadow transition flex items-center justify-center gap-1.5"
-                      >
-                        <Send className="w-3.5 h-3.5" /> Save Note
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {/* Follow-up Timeline */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-ocean-600 dark:text-ocean-400" /> Interaction Timeline ({followUps.length})
-                  </h4>
-
-                  <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                    {followUps.length === 0 ? (
-                      <p className="text-xs text-slate-400 italic py-4 text-center">
-                        No activity notes logged yet.
-                      </p>
-                    ) : (
-                      followUps.map((f) => (
-                        <div
-                          key={f.id}
-                          className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1.5 text-xs"
-                        >
-                          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px]">
-                            <span className="font-semibold text-ocean-600 dark:text-ocean-400">
-                              By {f.createdBy?.name || 'Sales Agent'}
-                            </span>
-                            <span>Target Date: {new Date(f.followUpDate).toLocaleString()}</span>
-                          </div>
-                          <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-normal">{f.note}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                <button
+                  onClick={() => setSelectedCustomer(null)}
+                  className="p-1 text-mono-400 hover:text-mono-900 dark:hover:text-white rounded-lg border border-mono-200 dark:border-mono-800"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            </Modal>
-          )}
-        </main>
-      </div>
+
+              {/* Follow-up Notes Timeline List */}
+              <div className="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                <h3 className="text-xs font-mono font-bold text-mono-500 uppercase tracking-wider">
+                  Timeline History ({followUps.length})
+                </h3>
+                {loadingFollowUps ? (
+                  <p className="text-xs text-mono-500 font-mono py-4 text-center">Loading interactions...</p>
+                ) : followUps.length === 0 ? (
+                  <p className="text-xs text-mono-500 font-mono py-4 text-center">No recorded follow-up interactions.</p>
+                ) : (
+                  followUps.map((f) => (
+                    <div key={f.id} className="p-3 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl space-y-1">
+                      <p className="text-xs text-mono-900 dark:text-mono-200">{f.note}</p>
+                      <div className="flex items-center justify-between text-[10px] text-mono-500 font-mono pt-1">
+                        <span>By: {f.createdBy?.name || 'System User'}</span>
+                        <span>{new Date(f.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Add Follow-up Form */}
+            <form onSubmit={handleAddFollowUp} className="pt-4 border-t border-mono-200 dark:border-mono-800 space-y-3">
+              <textarea
+                rows={2}
+                required
+                placeholder="Log interaction note or follow-up status..."
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                className="w-full p-3 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition"
+              />
+              <button
+                type="submit"
+                disabled={addingFollowUp}
+                className="w-full py-2.5 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black text-xs font-extrabold rounded-xl transition shadow-sm disabled:opacity-50"
+              >
+                {addingFollowUp ? 'Logging...' : 'Log Interaction Note'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

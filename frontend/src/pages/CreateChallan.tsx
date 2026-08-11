@@ -8,14 +8,14 @@ import {
   Plus,
   Trash2,
   AlertTriangle,
-  CheckCircle,
   ArrowLeft,
+  CheckCircle2,
+  FileSpreadsheet,
 } from 'lucide-react';
 
-interface SelectedItem {
+interface LineItemInput {
   productId: string;
   quantity: number;
-  product?: Product;
 }
 
 export const CreateChallan: React.FC = () => {
@@ -25,18 +25,17 @@ export const CreateChallan: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
-  const [items, setItems] = useState<SelectedItem[]>([
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [items, setItems] = useState<LineItemInput[]>([
     { productId: '', quantity: 1 },
   ]);
 
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
   useEffect(() => {
-    const loadMasterData = async () => {
+    const fetchMasterData = async () => {
       setLoading(true);
       try {
         const [custRes, prodRes]: any[] = await Promise.all([
@@ -44,328 +43,284 @@ export const CreateChallan: React.FC = () => {
           api.get('/products?limit=100'),
         ]);
 
-        if (custRes.success) setCustomers(custRes.data);
-        if (prodRes.success) setProducts(prodRes.data);
+        if (custRes.success) setCustomers(custRes.data || []);
+        if (prodRes.success) setProducts(prodRes.data || []);
       } catch (err) {
-        console.error('Failed to load customers and products master data:', err);
+        console.error('Error fetching master data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadMasterData();
+    fetchMasterData();
   }, []);
 
-  const handleProductChange = (index: number, productId: string) => {
-    const prod = products.find((p) => p.id === productId);
-    const updated = [...items];
-    updated[index] = {
-      ...updated[index],
-      productId,
-      product: prod,
-    };
-    setItems(updated);
-  };
-
-  const handleQuantityChange = (index: number, quantity: number) => {
-    const updated = [...items];
-    updated[index] = {
-      ...updated[index],
-      quantity: Math.max(1, quantity),
-    };
-    setItems(updated);
-  };
-
-  const addItemRow = () => {
+  const handleAddItem = () => {
     setItems([...items, { productId: '', quantity: 1 }]);
   };
 
-  const removeItemRow = (index: number) => {
+  const handleRemoveItem = (index: number) => {
     if (items.length === 1) return;
     setItems(items.filter((_, i) => i !== index));
   };
 
-  // Calculate Overall Grand Total
+  const handleItemChange = (index: number, field: keyof LineItemInput, value: any) => {
+    const updated = [...items];
+    updated[index] = { ...updated[index], [field]: value };
+    setItems(updated);
+  };
+
   const calculateTotal = () => {
-    return items.reduce((acc, curr) => {
-      if (!curr.product) return acc;
-      return acc + Number(curr.product.unitPrice) * curr.quantity;
+    return items.reduce((sum, item) => {
+      const prod = products.find((p) => p.id === item.productId);
+      const price = prod ? Number(prod.unitPrice) : 0;
+      return sum + price * (item.quantity || 0);
     }, 0);
   };
 
-  // Check if any line item exceeds available stock
-  const hasStockWarning = items.some((item) => {
-    if (!item.product) return false;
-    return item.quantity > item.product.currentStock;
-  });
+  const checkStockWarnings = () => {
+    return items.map((item) => {
+      if (!item.productId) return null;
+      const prod = products.find((p) => p.id === item.productId);
+      if (!prod) return null;
+      const isInsufficient = prod.currentStock < item.quantity;
+      return {
+        product: prod,
+        requested: item.quantity,
+        available: prod.currentStock,
+        isInsufficient,
+      };
+    }).filter(Boolean);
+  };
 
-  const handleSubmitChallan = async (confirmImmediately: boolean = false) => {
+  const handleCreateChallan = async (confirmImmediately: boolean = false) => {
     setError(null);
     if (!selectedCustomerId) {
-      setError('Please select a customer for this Delivery Challan');
+      setError('Please select a customer for the delivery note');
       return;
     }
 
     const validItems = items.filter((i) => i.productId && i.quantity > 0);
     if (validItems.length === 0) {
-      setError('Please add at least 1 valid product line item');
+      setError('Please select at least one product item');
       return;
     }
 
     setSubmitting(true);
     try {
-      // 1. Create Draft Challan
-      const draftRes: any = await api.post('/sales-challans', {
+      // 1. Create Draft
+      const res: any = await api.post('/sales-challans', {
         customerId: selectedCustomerId,
         notes,
-        items: validItems.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        items: validItems,
       });
 
-      if (!draftRes.success) {
-        throw new Error(draftRes.error?.message || 'Failed to save draft challan');
-      }
+      if (!res.success) throw new Error(res.message || 'Failed to create challan draft');
 
-      const newChallanId = draftRes.data.id;
+      const challanId = res.data.id;
 
-      // 2. If Confirm Immediately clicked, execute stock deduction transaction
+      // 2. If Confirm Immediately is requested
       if (confirmImmediately) {
-        const confirmRes: any = await api.post(`/sales-challans/${newChallanId}/confirm`);
-        if (!confirmRes.success) {
-          throw new Error(confirmRes.error?.message || 'Failed to confirm delivery dispatch');
-        }
+        const confirmRes: any = await api.post(`/sales-challans/${challanId}/confirm`);
+        if (!confirmRes.success) throw new Error(confirmRes.message || 'Failed to confirm dispatch');
       }
 
-      navigate(`/sales-challans/${newChallanId}`);
+      navigate(`/sales-challans/${challanId}`);
     } catch (err: any) {
-      setError(err.message || 'Error processing sales challan');
+      setError(err.message || 'Operation failed');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-4 border-ocean-600 border-t-transparent rounded-full" />
-        </div>
-      </div>
-    );
-  }
+  const stockWarnings = checkStockWarnings();
+  const hasStockError = stockWarnings.some((w) => w?.isInsufficient);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-surface-dark text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+    <div className="flex min-h-screen bg-mono-100 dark:bg-surface-dark text-mono-900 dark:text-white font-sans transition-colors duration-200">
       <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar title="Sales Challan Builder" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
+        <Navbar title="Create Delivery Order" onMobileMenuToggle={() => setMobileMenuOpen(true)} />
 
         <main className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1 max-w-5xl mx-auto w-full">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between animate-fade-up">
             <button
               onClick={() => navigate('/sales-challans')}
-              className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 text-xs font-mono font-bold text-mono-600 dark:text-mono-400 hover:text-mono-900 dark:hover:text-white transition flex items-center gap-1 border border-mono-200 dark:border-mono-800 rounded-xl bg-white dark:bg-mono-950"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Orders Directory
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Dispatches
             </button>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Create Sales Delivery Order
-            </h1>
+            <span className="text-xs font-mono font-extrabold text-mono-500 uppercase">
+              CHALLAN BUILDER WORKFLOW
+            </span>
           </div>
 
           {error && (
-            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-400 text-xs sm:text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 shrink-0" />
+            <div className="p-4 rounded-2xl bg-mono-100 dark:bg-mono-900 border border-mono-300 dark:border-mono-700 text-mono-900 dark:text-mono-100 text-xs font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Customer Selection Card */}
-          <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl space-y-4 shadow-sm transition-colors duration-200">
-            <h3 className="text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-              1. Customer Account & Dispatch Instructions
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase mb-2">
-                  Select Customer Account *
-                </label>
-                <select
-                  value={selectedCustomerId}
-                  onChange={(e) => setSelectedCustomerId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-ocean-600"
-                >
-                  <option value="">-- Choose Customer Account --</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.businessName || c.companyName || 'Individual'}) — {c.phone}
-                    </option>
-                  ))}
-                </select>
+          {/* Guided Workflow Container */}
+          <div className="bg-white dark:bg-surface-cardDark border border-mono-200 dark:border-surface-borderDark rounded-2xl p-6 shadow-sm space-y-8 animate-fade-up">
+            {/* Step 1: Customer Selection */}
+            <div className="space-y-3 pb-6 border-b border-mono-200 dark:border-mono-800">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-mono-900 text-white dark:bg-white dark:text-black flex items-center justify-center font-mono font-bold text-xs">
+                  1
+                </span>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-mono-900 dark:text-white">
+                  Customer & Delivery Metadata
+                </h2>
               </div>
 
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase mb-2">
-                  Dispatch Instructions / Remarks
-                </label>
-                <input
-                  type="text"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Deliver to Pune MIDC Gate 2"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-ocean-600"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Line Items Editor Card */}
-          <div className="bg-white dark:bg-surface-cardDark border border-slate-200 dark:border-surface-borderDark p-5 sm:p-6 rounded-2xl space-y-4 shadow-sm transition-colors duration-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                2. Delivery Line Items & Pricing Snapshots
-              </h3>
-              <button
-                type="button"
-                onClick={addItemRow}
-                className="px-3 py-1.5 bg-ocean-50 text-ocean-700 dark:bg-ocean-950 dark:text-ocean-300 border border-ocean-200 dark:border-ocean-800 hover:bg-ocean-100 text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" /> Add Product Row
-              </button>
-            </div>
-
-            {/* Line items list */}
-            <div className="space-y-3">
-              {items.map((item, idx) => {
-                const isOverStock =
-                  item.product && item.quantity > item.product.currentStock;
-                const lineTotal = item.product
-                  ? Number(item.product.unitPrice) * item.quantity
-                  : 0;
-
-                return (
-                  <div
-                    key={idx}
-                    className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+                    Select Customer Account *
+                  </label>
+                  <select
+                    value={selectedCustomerId}
+                    onChange={(e) => setSelectedCustomerId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs sm:text-sm text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-sans"
                   >
-                    {/* Product Selector */}
-                    <div className="md:col-span-5">
-                      <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase mb-1">
-                        Product Item #{idx + 1}
-                      </label>
-                      <select
-                        value={item.productId}
-                        onChange={(e) => handleProductChange(idx, e.target.value)}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-ocean-600"
-                      >
-                        <option value="">-- Select Product SKU --</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} (SKU: {p.sku}) — Stock: {p.currentStock} | ₹{p.unitPrice}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <option value="">-- Choose Customer --</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.businessName ? `(${c.businessName})` : ''} - {c.mobile}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                    {/* Quantity */}
-                    <div className="md:col-span-3">
-                      <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase mb-1">
-                        Quantity
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(idx, parseInt(e.target.value, 10) || 1)
-                        }
-                        className={`w-full px-3 py-2 bg-white dark:bg-slate-900 border rounded-lg text-xs font-mono font-bold focus:outline-none ${
-                          isOverStock
-                            ? 'border-rose-500 text-rose-600 dark:text-rose-400'
-                            : 'border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100'
-                        }`}
-                      />
-                      {isOverStock && (
-                        <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-1 font-semibold">
-                          ⚠️ Exceeds stock ({item.product?.currentStock} available)
-                        </p>
-                      )}
-                    </div>
+                <div>
+                  <label className="block text-[10px] font-mono font-extrabold text-mono-500 uppercase mb-1">
+                    Dispatch / Transport Notes
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Vehicle MH-12-AB-1234, Driver: Ramesh"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl text-xs sm:text-sm text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 dark:focus:border-white transition font-sans"
+                  />
+                </div>
+              </div>
+            </div>
 
-                    {/* Price & Line Total */}
-                    <div className="md:col-span-3 text-right">
-                      <label className="block text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase mb-1">
-                        Line Total
-                      </label>
-                      <span className="font-mono font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 block">
-                        ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </span>
-                      {item.product && (
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                          @ ₹{item.product.unitPrice} / unit
-                        </span>
-                      )}
-                    </div>
+            {/* Step 2: Line Items Selection */}
+            <div className="space-y-4 pb-6 border-b border-mono-200 dark:border-mono-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-mono-900 text-white dark:bg-white dark:text-black flex items-center justify-center font-mono font-bold text-xs">
+                    2
+                  </span>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-mono-900 dark:text-white">
+                    Order Products Itemization
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddItem}
+                  className="px-3 py-1.5 bg-mono-100 dark:bg-mono-900 hover:bg-mono-200 dark:hover:bg-mono-800 text-mono-900 dark:text-white text-xs font-mono font-bold rounded-xl border border-mono-300 dark:border-mono-700 transition flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Product Row
+                </button>
+              </div>
 
-                    {/* Delete row */}
-                    <div className="md:col-span-1 text-center">
+              <div className="space-y-3">
+                {items.map((item, idx) => {
+                  const selectedProd = products.find((p) => p.id === item.productId);
+                  const price = selectedProd ? Number(selectedProd.unitPrice) : 0;
+                  const itemTotal = price * (item.quantity || 0);
+
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3.5 bg-mono-50 dark:bg-mono-950 border border-mono-200 dark:border-mono-800 rounded-xl flex flex-col sm:flex-row items-center gap-3"
+                    >
+                      {/* Product Dropdown */}
+                      <div className="flex-1 w-full">
+                        <select
+                          value={item.productId}
+                          onChange={(e) => handleItemChange(idx, 'productId', e.target.value)}
+                          className="w-full px-3 py-2 bg-white dark:bg-mono-900 border border-mono-200 dark:border-mono-800 rounded-lg text-xs text-mono-900 dark:text-white focus:outline-none focus:border-mono-900 font-sans"
+                        >
+                          <option value="">-- Choose Product SKU --</option>
+                          {products.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} (SKU: {p.sku}) — Available: {p.currentStock}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Quantity */}
+                      <div className="w-full sm:w-28">
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          placeholder="Qty"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(idx, 'quantity', parseInt(e.target.value) || 1)}
+                          className="w-full px-3 py-2 bg-white dark:bg-mono-900 border border-mono-200 dark:border-mono-800 rounded-lg text-xs font-mono text-mono-900 dark:text-white focus:outline-none focus:border-mono-900"
+                        />
+                      </div>
+
+                      {/* Line Item Pricing Total */}
+                      <div className="w-full sm:w-36 text-right font-mono text-xs font-bold text-mono-900 dark:text-white">
+                        ₹{itemTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </div>
+
+                      {/* Remove Row */}
                       <button
                         type="button"
-                        onClick={() => removeItemRow(idx)}
+                        onClick={() => handleRemoveItem(idx)}
                         disabled={items.length === 1}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition disabled:opacity-30"
+                        className="p-2 text-mono-400 hover:text-mono-900 dark:hover:text-white rounded-lg transition disabled:opacity-30"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Total Footer */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Step 3: Summary & Confirmation CTAs */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-2">
               <div>
-                {hasStockWarning && (
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4" />
-                    Notice: One or more products exceed stock. You can save as Draft, but Confirmation requires sufficient inventory.
-                  </p>
-                )}
-              </div>
-              <div className="text-right">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-extrabold tracking-wider block">
-                  Grand Order Total
+                <span className="text-[10px] font-mono font-extrabold text-mono-500 uppercase tracking-widest block">
+                  ORDER TOTAL VALUE
                 </span>
-                <span className="text-2xl font-extrabold font-mono text-slate-900 dark:text-white">
+                <span className="text-3xl font-extrabold font-mono text-mono-900 dark:text-white">
                   ₹{calculateTotal().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => handleCreateChallan(false)}
+                  className="px-4 py-2.5 border border-mono-300 dark:border-mono-700 bg-mono-100 dark:bg-mono-900 hover:bg-mono-200 dark:hover:bg-mono-800 text-mono-900 dark:text-white text-xs sm:text-sm font-mono font-bold rounded-xl transition flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="w-4 h-4" /> Save Draft
+                </button>
+
+                <button
+                  type="button"
+                  disabled={submitting || hasStockError}
+                  onClick={() => handleCreateChallan(true)}
+                  className="px-5 py-2.5 bg-mono-900 hover:bg-mono-800 dark:bg-white dark:hover:bg-mono-100 text-white dark:text-black text-xs sm:text-sm font-extrabold rounded-xl shadow-sm transition flex items-center gap-2 disabled:opacity-40"
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Confirm Dispatch
+                </button>
+              </div>
             </div>
-          </div>
-
-          {/* Action Submission Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={() => handleSubmitChallan(false)}
-              className="w-full sm:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold rounded-xl transition shadow-sm"
-            >
-              {submitting ? 'Saving...' : 'Save as Draft (No Stock Impact)'}
-            </button>
-
-            <button
-              type="button"
-              disabled={submitting || hasStockWarning}
-              onClick={() => handleSubmitChallan(true)}
-              className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-emerald-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <CheckCircle className="w-4 h-4" />
-              {submitting ? 'Deducting Stock...' : 'Confirm Dispatch & Deduct Stock'}
-            </button>
           </div>
         </main>
       </div>

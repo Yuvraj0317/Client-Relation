@@ -8,51 +8,48 @@
   }
   
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
-    @apply antialiased selection:bg-ocean-600 selection:text-white min-h-screen transition-colors duration-200 font-sans;
+    background-color: #F5F5F5;
+    color: #111111;
+    @apply antialiased selection:bg-mono-900 selection:text-white min-h-screen transition-colors duration-200 font-sans;
   }
 
   .dark body {
-    background-color: #090d16;
-    color: #f8fafc;
+    background-color: #050505;
+    color: #FFFFFF;
+    @apply selection:bg-white selection:text-black;
   }
 }
 
-/* Abstract Monochrome Operations Canvas Background */
-.bg-abstract-grid {
+/* Monochrome Subtle Canvas Background */
+.bg-mono-canvas {
   background-image: 
-    linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px),
-    radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.07) 0%, rgba(248, 250, 252, 0) 70%);
-  background-size: 40px 40px, 40px 40px, 100% 100%;
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, rgba(5, 5, 5, 0) 70%),
+    linear-gradient(to bottom, rgba(13, 13, 13, 0.8), rgba(5, 5, 5, 1));
 }
 
-.dark .bg-abstract-grid {
+.light .bg-mono-canvas {
   background-image: 
-    linear-gradient(to right, rgba(30, 41, 59, 0.35) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(30, 41, 59, 0.35) 1px, transparent 1px),
-    radial-gradient(circle at 50% -10%, rgba(2, 132, 199, 0.12) 0%, rgba(9, 13, 22, 0) 65%);
-  background-size: 40px 40px, 40px 40px, 100% 100%;
+    radial-gradient(circle at 50% 0%, rgba(0, 0, 0, 0.03) 0%, rgba(245, 245, 245, 0) 70%),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(245, 245, 245, 1));
 }
 
-/* Subtle Desktop-Only Card Elevation & Tilt (Max 1 Degree) */
+/* Subtle Pointer Tilt (Max 0.5 - 1 Degree) */
 @media (hover: hover) and (pointer: fine) {
-  .tilt-card-subtle {
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  .tilt-mono-card {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
     will-change: transform;
   }
 
-  .tilt-card-subtle:hover {
-    transform: perspective(1000px) rotateX(1deg) rotateY(-1deg) translate3d(0, -2px, 0);
+  .tilt-mono-card:hover {
+    transform: perspective(1000px) rotateX(0.5deg) rotateY(-0.5deg) translate3d(0, -2px, 0);
   }
 }
 
-/* Smooth Entrance & Section Disclosure Animations */
+/* Smooth Entrance Keyframes */
 @keyframes sectionFadeUp {
   from {
     opacity: 0;
-    transform: translate3d(0, 10px, 0);
+    transform: translate3d(0, 12px, 0);
   }
   to {
     opacity: 1;
@@ -61,11 +58,11 @@
 }
 
 .animate-fade-up {
-  animation: sectionFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: sectionFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-section-reveal {
-  animation: sectionFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: sectionFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Reduced Motion Override */
@@ -76,7 +73,7 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .tilt-card-subtle:hover {
+  .tilt-mono-card:hover {
     transform: none !important;
   }
   .animate-fade-up, .animate-section-reveal {
@@ -86,22 +83,22 @@
   }
 }
 
-/* Custom Minimalist Scrollbars */
+/* Custom Monochrome Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background-color: #f1f5f9;
+  background-color: #F5F5F5;
 }
 .dark ::-webkit-scrollbar-track {
-  background-color: #090d16;
+  background-color: #050505;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 dark:bg-slate-800 rounded;
+  @apply bg-mono-300 dark:bg-mono-800 rounded;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400 dark:bg-slate-700;
+  @apply bg-mono-400 dark:bg-mono-700;
 }
 
 /* Printable Delivery Note Layout (@media print) */
@@ -126,7 +123,7 @@
   .print-card {
     background: #ffffff !important;
     color: #000000 !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid #E5E5E5 !important;
   }
 
   table {
@@ -135,7 +132,7 @@
   }
 
   th, td {
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid #E5E5E5 !important;
     color: #000000 !important;
   }
 }
