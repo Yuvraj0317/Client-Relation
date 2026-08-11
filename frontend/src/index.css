@@ -8,13 +8,20 @@
   }
   
   body {
-    @apply bg-surface-light text-slate-900 dark:bg-surface-dark dark:text-slate-100 antialiased selection:bg-ocean-600 selection:text-white min-h-screen transition-colors duration-200 font-sans;
+    background-color: #f8fafc;
+    color: #0f172a;
+    @apply antialiased selection:bg-ocean-600 selection:text-white min-h-screen transition-colors duration-200 font-sans;
+  }
+
+  .dark body {
+    background-color: #090d16;
+    color: #f8fafc;
   }
 }
 
 /* Ambient Ocean Blue Background Glow */
 .bg-ambient-glow {
-  background-radial: radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.12) 0%, rgba(9, 13, 22, 0) 70%);
+  background-image: radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.12) 0%, rgba(9, 13, 22, 0) 70%);
 }
 
 .dark .bg-ambient-glow {
@@ -58,7 +65,10 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-slate-100 dark:bg-surface-dark;
+  background-color: #f1f5f9;
+}
+.dark ::-webkit-scrollbar-track {
+  background-color: #090d16;
 }
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-300 dark:bg-slate-800 rounded;
