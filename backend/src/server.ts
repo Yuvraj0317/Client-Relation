@@ -25,8 +25,11 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Healthcheck Endpoint: GET /health & GET /api/health
-const healthHandler = (req: express.Request, res: express.Response) => {
+// Healthcheck & Root Endpoints: GET & HEAD for /, /health, /api, /api/health
+const rootHealthHandler = (req: express.Request, res: express.Response) => {
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
+  }
   return ApiResponse.success(res, {
     status: 'OK',
     service: 'Mini ERP + CRM API Gateway',
@@ -35,8 +38,12 @@ const healthHandler = (req: express.Request, res: express.Response) => {
   });
 };
 
-app.get('/health', healthHandler);
-app.get('/api/health', healthHandler);
+app.all(['/', '/health', '/api', '/api/health'], (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return rootHealthHandler(req, res);
+  }
+  next();
+});
 
 // Authentication Routes
 app.use('/api/auth', authRoutes);
