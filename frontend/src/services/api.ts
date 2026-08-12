@@ -30,10 +30,22 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
-    const apiError = error.response?.data?.error || {
-      message: error.message || 'An unexpected network error occurred',
-    };
-    return Promise.reject(apiError);
+
+    let message = 'An unexpected network error occurred';
+
+    if (error.response?.data?.message) {
+      message = error.response.data.message;
+    } else if (error.response?.data?.error?.message) {
+      message = error.response.data.error.message;
+    } else if (error.response?.status === 404) {
+      message = 'Backend API server unavailable (HTTP 404). Please ensure backend process is running.';
+    } else if (typeof error.response?.data === 'string' && error.response.data.includes('could not be found')) {
+      message = 'Backend API endpoint not found. Please verify backend server is running.';
+    } else if (error.message) {
+      message = error.message;
+    }
+
+    return Promise.reject({ message });
   }
 );
 
