@@ -15,14 +15,21 @@ import salesChallanRoutes from './routes/salesChallan.routes';
 
 const app = express();
 
-// Production CORS Middleware Configuration
-const allowedOrigins = env.CORS_ORIGIN === '*' ? '*' : env.CORS_ORIGIN.split(',').map((o) => o.trim());
+// Production Dynamic CORS Middleware (Handles credentials: true with any Vercel/local origin)
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Reflect requesting origin to satisfy Access-Control-Allow-Credentials
+      callback(null, origin || '*');
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   })
 );
+
+// Explicit Preflight Handler for all routes
+app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,23 +54,29 @@ app.all(['/health', '/api/health'], (req, res, next) => {
   next();
 });
 
-// Authentication Routes
+// Authentication Routes (Mounted on /, /api/, /api/v1/ for fail-safe compatibility)
+app.use('/auth', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/auth', authRoutes);
 
 // Customer CRM Routes
+app.use('/customers', customerRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/v1/customers', customerRoutes);
 
 // Product & Inventory Routes
+app.use('/products', productRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/v1/products', productRoutes);
 
 // Stock Movements Routes
+app.use('/stock', stockRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/v1/stock', stockRoutes);
 
 // Sales Challan Routes
+app.use('/challans', salesChallanRoutes);
+app.use('/sales-challans', salesChallanRoutes);
 app.use('/api/challans', salesChallanRoutes);
 app.use('/api/sales-challans', salesChallanRoutes);
 app.use('/api/v1/sales-challans', salesChallanRoutes);
@@ -73,7 +86,7 @@ const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
 if (fs.existsSync(frontendDistPath)) {
   app.use(express.static(frontendDistPath));
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.startsWith('/auth')) {
       return next();
     }
     res.sendFile(path.join(frontendDistPath, 'index.html'));
