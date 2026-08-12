@@ -1,0 +1,16 @@
+{
+  "name": "fundsroom-mini-erp-crm",
+  "version": "1.0.0",
+  "description": "Fundsroom Mini ERP + CRM Operations Portal Monorepo",
+  "main": "backend/dist/server.js",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "build:backend": "cd backend && npm install && npx prisma generate && npm run build",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "start": "cd backend && node dist/server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

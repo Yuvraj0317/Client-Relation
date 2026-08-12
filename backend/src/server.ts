@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
 import { env } from './config/env';
 import { errorHandler, NotFoundError } from './middlewares/error.middleware';
 import { ApiResponse } from './utils/apiResponse';
@@ -38,7 +40,7 @@ const rootHealthHandler = (req: express.Request, res: express.Response) => {
   });
 };
 
-app.all(['/', '/health', '/api', '/api/health'], (req, res, next) => {
+app.all(['/health', '/api/health'], (req, res, next) => {
   if (req.method === 'GET' || req.method === 'HEAD') {
     return rootHealthHandler(req, res);
   }
@@ -65,6 +67,26 @@ app.use('/api/v1/stock', stockRoutes);
 app.use('/api/challans', salesChallanRoutes);
 app.use('/api/sales-challans', salesChallanRoutes);
 app.use('/api/v1/sales-challans', salesChallanRoutes);
+
+// Serve Frontend Static Bundle if built (Single-Service Deployment)
+const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+} else {
+  // If frontend is separate, root GET/HEAD returns health check JSON
+  app.all(['/', '/api'], (req, res, next) => {
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      return rootHealthHandler(req, res);
+    }
+    next();
+  });
+}
 
 // 404 Route Handler
 app.use((req, res, next) => {
