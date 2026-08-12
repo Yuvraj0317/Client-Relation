@@ -5,6 +5,7 @@ import fs from 'fs';
 import { env } from './config/env';
 import { errorHandler, NotFoundError } from './middlewares/error.middleware';
 import { ApiResponse } from './utils/apiResponse';
+import { ensureDatabaseSeeded } from './utils/dbInit';
 
 // Import Routes
 import authRoutes from './routes/auth.routes';
@@ -112,9 +113,10 @@ app.use(errorHandler);
 const PORT = parseInt(env.PORT, 10) || 5000;
 
 if (require.main === module) {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`🚀 Mini ERP Backend Server listening on http://localhost:${PORT}`);
     console.log(`📡 Environment: ${env.NODE_ENV}`);
+    await ensureDatabaseSeeded();
   });
 }
 
